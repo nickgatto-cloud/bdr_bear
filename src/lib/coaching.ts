@@ -1,0 +1,773 @@
+// Togal Call Coach — coaching knowledge base
+// Powers the live objection-handling, battlecards, and FANT/VESTT qualification.
+
+export type FantKey = "F" | "A" | "N" | "T";
+export type VesttKey = "V" | "E" | "S" | "T1" | "T2";
+
+export type ChipCategory =
+  | "competitor"
+  | "objection"
+  | "tech"
+  | "security"
+  | "trade"
+  | "role";
+
+export interface Chip {
+  id: string;
+  label: string;
+  category: ChipCategory;
+}
+
+export interface CoachingCard {
+  /** matches a chip id */
+  id: string;
+  /** short label shown in the guidance card header */
+  tag: string;
+  category: ChipCategory;
+  heading: string;
+  /** what the prospect probably means */
+  signal: string;
+  /** the recommended talk track / rebuttal */
+  talkTrack: string;
+  /** one-line tactical tip */
+  tip?: string;
+  /** qualification dimensions this move advances */
+  fant?: FantKey[];
+  vestt?: VesttKey[];
+  /** keywords that map free-text input to this card */
+  keywords: string[];
+}
+
+/* ------------------------------------------------------------------ */
+/*  Frameworks                                                         */
+/* ------------------------------------------------------------------ */
+
+export const FANT: { key: FantKey; label: string; full: string; hint: string }[] = [
+  { key: "F", label: "F — Fit", full: "Fit", hint: "Right trade, plan volume, and workflow for Togal." },
+  { key: "A", label: "A — Auth", full: "Authority", hint: "Talking to (or routed toward) the decision-maker." },
+  { key: "N", label: "N — Need", full: "Need", hint: "A real takeoff pain that costs them time or bids." },
+  { key: "T", label: "T — Time", full: "Timing", hint: "A reason to act now — active bids, season, deadline." },
+];
+
+export const VESTT: { key: VesttKey; label: string; full: string; hint: string }[] = [
+  { key: "V", label: "V", full: "Verify pain", hint: "Confirm the takeoff problem in their words." },
+  { key: "E", label: "E", full: "Educate", hint: "How Togal auto-detects, measures, and compares." },
+  { key: "S", label: "S", full: "Show", hint: "Run a live takeoff on their own drawings." },
+  { key: "T1", label: "T", full: "Tailor", hint: "Map the value to their trade and role." },
+  { key: "T2", label: "T", full: "Trial close", hint: "Lock the next step before the call ends." },
+];
+
+/* ------------------------------------------------------------------ */
+/*  Chips (rendered in screenshot order)                               */
+/* ------------------------------------------------------------------ */
+
+export const CHIPS: Chip[] = [
+  { id: "beam-ai", label: "Beam AI", category: "competitor" },
+  { id: "bluebeam", label: "Bluebeam", category: "competitor" },
+  { id: "planswift", label: "PlanSwift/OST", category: "competitor" },
+  { id: "procore", label: "Procore/Autodesk", category: "competitor" },
+  { id: "stack", label: "STACK", category: "competitor" },
+  { id: "edge-sage", label: "Edge/Sage", category: "competitor" },
+
+  { id: "no-budget", label: "No budget", category: "objection" },
+  { id: "dont-trust-ai", label: "Don't trust AI", category: "objection" },
+  { id: "too-busy", label: "Too busy", category: "objection" },
+  { id: "just-info", label: "Just send info", category: "objection" },
+  { id: "tried-ai", label: "Tried AI before", category: "objection" },
+  { id: "have-estimators", label: "Have estimators", category: "objection" },
+  { id: "too-complex", label: "Too complex", category: "objection" },
+  { id: "need-think", label: "Need to think", category: "objection" },
+
+  { id: "claude-llm", label: "Claude/LLM", category: "tech" },
+  { id: "it-security", label: "IT / Security", category: "security" },
+
+  { id: "drywall", label: "Drywall/Framing", category: "trade" },
+  { id: "retaining", label: "Retaining walls", category: "trade" },
+  { id: "concrete", label: "Concrete", category: "trade" },
+  { id: "electrical", label: "Electrical", category: "trade" },
+  { id: "gc", label: "General Contractor", category: "trade" },
+  { id: "painting", label: "Painting/Wallpaper", category: "trade" },
+
+  { id: "owner", label: "Owner role", category: "role" },
+  { id: "estimator", label: "Estimator role", category: "role" },
+  { id: "pm-precon", label: "PM/Precon role", category: "role" },
+  { id: "bid-volume", label: "Bid volume", category: "role" },
+];
+
+/* ------------------------------------------------------------------ */
+/*  Coaching cards                                                     */
+/* ------------------------------------------------------------------ */
+
+export const COACHING: Record<string, CoachingCard> = {
+  /* ---- Competitor battlecards ---- */
+  "beam-ai": {
+    id: "beam-ai",
+    tag: "Battlecard",
+    category: "competitor",
+    heading: "Beam AI",
+    signal: "They're comparing Togal to another AI takeoff tool.",
+    talkTrack:
+      "Good — they already believe AI takeoff is real. Pivot to proof: Togal is built by estimators, auto-detects areas and counts, and compares revisions side-by-side at up to 98% accuracy. Don't sell against features — offer to run their own plan set live and let the result speak.",
+    tip: "Win on accuracy + revision comparison, demoed on their drawings.",
+    fant: ["N"],
+    vestt: ["E", "S"],
+    keywords: ["beam ai", "beam.ai"],
+  },
+  bluebeam: {
+    id: "bluebeam",
+    tag: "Battlecard",
+    category: "competitor",
+    heading: "Bluebeam",
+    signal: "Bluebeam is their markup + collaboration hub — they think they're covered.",
+    talkTrack:
+      "Bluebeam is excellent for markup and collaboration — keep it. But Bluebeam still makes you measure by hand. Togal automates the measuring: drop a plan, it detects and counts in minutes, and you can push quantities into your workflow. You don't replace Bluebeam, you stop hand-measuring inside it.",
+    tip: "Position as complementary: Togal measures, Bluebeam marks up.",
+    fant: ["F", "N"],
+    vestt: ["V", "E"],
+    keywords: ["bluebeam", "blue beam"],
+  },
+  planswift: {
+    id: "planswift",
+    tag: "Battlecard",
+    category: "competitor",
+    heading: "PlanSwift / On-Screen Takeoff",
+    signal: "They run a legacy click-by-click manual takeoff tool.",
+    talkTrack:
+      "PlanSwift and OST work — but every count and area is a manual click. Togal does that detection automatically, then you verify. The same takeoff that's an afternoon of clicking becomes minutes. Ask: 'How long does a typical plan set take you in PlanSwift today?' — then show the same one in Togal.",
+    tip: "Quantify their current click-time, then beat it live.",
+    fant: ["N", "T"],
+    vestt: ["V", "S"],
+    keywords: ["planswift", "plan swift", "on-screen", "on screen", "ost", "osT"],
+  },
+  procore: {
+    id: "procore",
+    tag: "Battlecard",
+    category: "competitor",
+    heading: "Procore / Autodesk",
+    signal: "They're citing a project/construction-management platform.",
+    talkTrack:
+      "Procore and Autodesk run the project — they don't do AI takeoff. Togal lives upstream at the estimating stage and feeds quantities into your process. It's not an either/or. Keep the platform; add the takeoff engine that fills it.",
+    tip: "Reframe: platform vs. takeoff engine — different jobs.",
+    fant: ["F"],
+    vestt: ["E"],
+    keywords: ["procore", "autodesk", "construction cloud", "assemble"],
+  },
+  stack: {
+    id: "stack",
+    tag: "Battlecard",
+    category: "competitor",
+    heading: "STACK",
+    signal: "Cloud takeoff + estimating — but still manual measurement.",
+    talkTrack:
+      "STACK moved takeoff to the cloud, which is great — but the measuring is still manual. Togal's edge is auto-detection: the AI finds the areas and counts so estimators verify instead of trace. Offer a head-to-head on one of their real plans.",
+    tip: "Auto-detect vs. manual trace is the whole pitch.",
+    fant: ["N"],
+    vestt: ["E", "S"],
+    keywords: ["stack"],
+  },
+  "edge-sage": {
+    id: "edge-sage",
+    tag: "Battlecard",
+    category: "competitor",
+    heading: "The EDGE / Sage Estimating",
+    signal: "They have a downstream estimating/costing system.",
+    talkTrack:
+      "The EDGE and Sage are where pricing lives — keep them. Togal handles the quantity takeoff that feeds those systems faster and more accurately. The hand-off is the value: get clean quantities into your estimating tool in minutes, not days.",
+    tip: "Togal feeds their estimating system — it doesn't compete with it.",
+    fant: ["F"],
+    vestt: ["E"],
+    keywords: ["edge", "the edge", "sage", "estimating edge"],
+  },
+
+  /* ---- Objections ---- */
+  "no-budget": {
+    id: "no-budget",
+    tag: "Objection",
+    category: "objection",
+    heading: "\"No budget\"",
+    signal: "Often means 'I don't see the ROI yet,' not 'I have zero dollars.'",
+    talkTrack:
+      "Anchor to the return, not the price. 'What's a won bid worth to you?' If Togal cuts takeoff time so you bid even one or two more jobs a month, it pays for itself many times over. Let's put real numbers on it — how many bids do you walk away from for lack of time?",
+    tip: "Convert price to ROI: time saved × bids won.",
+    fant: ["A", "N"],
+    vestt: ["V", "T2"],
+    keywords: ["no budget", "too expensive", "cost too much", "can't afford", "price", "expensive"],
+  },
+  "dont-trust-ai": {
+    id: "dont-trust-ai",
+    tag: "Objection",
+    category: "objection",
+    heading: "\"Don't trust AI\"",
+    signal: "They fear losing control or accuracy on numbers they're accountable for.",
+    talkTrack:
+      "Smart — you should be skeptical, your name is on the bid. Togal is a co-pilot, not autopilot: it detects and measures, you verify and adjust any region. Up to 98% accuracy on detection, and you stay in control of every number. Let me show you correcting a region live so you see how easy oversight is.",
+    tip: "Reframe AI as a verifiable co-pilot, not a black box.",
+    fant: ["N"],
+    vestt: ["E", "S"],
+    keywords: ["trust ai", "don't trust", "dont trust", "accuracy", "accurate", "black box", "wrong"],
+  },
+  "too-busy": {
+    id: "too-busy",
+    tag: "Objection",
+    category: "objection",
+    heading: "\"Too busy\"",
+    signal: "Being slammed with takeoffs is the exact problem Togal solves.",
+    talkTrack:
+      "That's the reason to look, not the reason to wait — busy means takeoffs are eating your week. Give me 15 minutes with one of your live plan sets and I'll run the takeoff while you watch. If it doesn't save you hours, we stop there.",
+    tip: "Turn 'busy' into urgency. Ask for 15 minutes on a live plan.",
+    fant: ["T"],
+    vestt: ["V", "T2"],
+    keywords: ["too busy", "no time", "slammed", "swamped", "busy"],
+  },
+  "just-info": {
+    id: "just-info",
+    tag: "Objection",
+    category: "objection",
+    heading: "\"Just send info\"",
+    signal: "A polite brush-off — a PDF rarely creates a decision.",
+    talkTrack:
+      "Happy to send it — but the 'aha' only lands when you see it on your own drawings. A 15-minute screen share beats any deck. I'll send a one-pager and we grab 15 minutes Thursday so it's not just another email in your inbox. What works?",
+    tip: "Trade the info for a short, dated demo slot.",
+    fant: ["A", "T"],
+    vestt: ["T2"],
+    keywords: ["send info", "send information", "send me", "email me", "send something", "send over"],
+  },
+  "tried-ai": {
+    id: "tried-ai",
+    tag: "Objection",
+    category: "objection",
+    heading: "\"Tried AI before\"",
+    signal: "They were burned by 'AI' that was a buzzword on a manual tool.",
+    talkTrack:
+      "What did you try, and where did it fall down? A lot of 'AI takeoff' is a label on a manual product. Togal was built by estimators and the detection is purpose-trained on construction drawings — plus it compares revisions automatically. Let me show you the difference on a plan that tripped up the last tool.",
+    tip: "Diagnose the prior failure, then differentiate on it.",
+    fant: ["N"],
+    vestt: ["V", "E", "S"],
+    keywords: ["tried ai", "tried it before", "didn't work", "didnt work", "used ai", "already tried"],
+  },
+  "have-estimators": {
+    id: "have-estimators",
+    tag: "Objection",
+    category: "objection",
+    heading: "\"We have estimators\"",
+    signal: "Fear that Togal replaces people, or that they're already covered.",
+    talkTrack:
+      "Perfect — Togal makes them faster, it doesn't replace them. Your estimators stop tracing and spend time on strategy, scope, and review. Same team, more bids out the door, fewer late nights. Want to let one of them run a takeoff in the demo?",
+    tip: "Position as a force-multiplier for the estimators you already have.",
+    fant: ["F", "N"],
+    vestt: ["E", "T1"],
+    keywords: ["have estimators", "got estimators", "our estimators", "team does", "we do it in house"],
+  },
+  "too-complex": {
+    id: "too-complex",
+    tag: "Objection",
+    category: "objection",
+    heading: "\"Too complex\"",
+    signal: "They expect a steep learning curve or CAD skills.",
+    talkTrack:
+      "It's simpler than what you do today. Drop a plan, click detect, verify — most estimators run their first real takeoff inside the demo, no CAD skills needed. The whole point is fewer clicks, faster takeoffs. Let me prove it on one of your plans right now.",
+    tip: "Counter 'complex' with a live first-takeoff in the demo.",
+    fant: ["F"],
+    vestt: ["E", "S"],
+    keywords: ["too complex", "complicated", "hard to use", "learning curve", "difficult", "complex"],
+  },
+  "need-think": {
+    id: "need-think",
+    tag: "Objection",
+    category: "objection",
+    heading: "\"Need to think about it\"",
+    signal: "Usually a missing piece — info, a stakeholder, or confidence.",
+    talkTrack:
+      "Totally fair. So I bring the right thing back — what specifically do you want to think through: the numbers, the fit for your trade, or who else needs to weigh in? Let's get those people on a 20-minute demo so you're deciding with full information instead of a maybe.",
+    tip: "Surface the real blocker; convert the stall into a scheduled step.",
+    fant: ["A", "T"],
+    vestt: ["V", "T2"],
+    keywords: ["think about it", "need to think", "internally", "discuss internally", "get back to you", "circle back"],
+  },
+
+  /* ---- Tech ---- */
+  "claude-llm": {
+    id: "claude-llm",
+    tag: "Tech deep-dive",
+    category: "tech",
+    heading: "\"Is this just ChatGPT / an LLM?\"",
+    signal: "They're testing whether the 'AI' is a generic chatbot bolted on.",
+    talkTrack:
+      "No — the takeoff detection is purpose-built computer-vision trained on real construction drawings, not a general chatbot. Language models are great for summarizing and Q&A, but measuring areas and counts is a specialized vision problem. That's why the accuracy holds up on actual plan sets.",
+    tip: "Separate the CV detection engine from any LLM assist features.",
+    fant: ["N"],
+    vestt: ["E"],
+    keywords: ["claude", "chatgpt", "llm", "gpt", "language model", "just ai", "is it ai"],
+  },
+
+  /* ---- Security ---- */
+  "it-security": {
+    id: "it-security",
+    tag: "Security",
+    category: "security",
+    heading: "IT / Security review",
+    signal: "There's a security or data-handling gate before they can buy.",
+    talkTrack:
+      "Great question to raise early. Your drawings are encrypted in transit and at rest, and we can share our security documentation and SOC 2 details on request. I won't guess at specifics on the call — let me connect you with our security team so your IT folks get the right answers directly.",
+    tip: "Acknowledge, don't improvise specifics. Route to the security team.",
+    fant: ["A", "T"],
+    vestt: ["E", "T2"],
+    keywords: ["security", "it review", "data", "encrypt", "soc 2", "soc2", "compliance", "privacy", "infosec"],
+  },
+
+  /* ---- Trades (tailor the demo) ---- */
+  drywall: {
+    id: "drywall",
+    tag: "Trade fit",
+    category: "trade",
+    heading: "Drywall / Framing",
+    signal: "Wall-heavy work — linear footage and sheet counts dominate.",
+    talkTrack:
+      "Perfect trade for Togal. It auto-detects wall lengths and areas, so you get linear footage and board/sheet counts in minutes. In the demo, pull up a floor plan and show walls detected and totaled — that's their daily grind, gone.",
+    tip: "Demo wall auto-detect + linear footage on a floor plan.",
+    fant: ["F", "N"],
+    vestt: ["S", "T1"],
+    keywords: ["drywall", "framing", "dry wall", "studs", "partition"],
+  },
+  retaining: {
+    id: "retaining",
+    tag: "Trade fit",
+    category: "trade",
+    heading: "Retaining walls",
+    signal: "Linear runs plus heights/segments drive their quantities.",
+    talkTrack:
+      "Show linear takeoff: Togal traces wall runs and segment lengths automatically, and you tier by height. Their estimators usually do this by hand off site plans — auto-detection is an obvious time win here.",
+    tip: "Demo linear runs + segment lengths on a site plan.",
+    fant: ["F", "N"],
+    vestt: ["S", "T1"],
+    keywords: ["retaining", "retaining wall", "site wall"],
+  },
+  concrete: {
+    id: "concrete",
+    tag: "Trade fit",
+    category: "trade",
+    heading: "Concrete",
+    signal: "Areas and volumes — slabs, footings, foundations.",
+    talkTrack:
+      "Lead with area + volume: Togal auto-detects slab areas and you carry depth to volume in seconds. Show a slab plan detected and totaled — concrete estimators feel the time savings immediately on big pours.",
+    tip: "Demo slab area auto-detect, then volume.",
+    fant: ["F", "N"],
+    vestt: ["S", "T1"],
+    keywords: ["concrete", "slab", "footing", "foundation", "rebar", "pour"],
+  },
+  electrical: {
+    id: "electrical",
+    tag: "Trade fit",
+    category: "trade",
+    heading: "Electrical",
+    signal: "Counts dominate — fixtures, devices, plus home-run lengths.",
+    talkTrack:
+      "Counting is where Togal shines for electrical: auto-count fixtures and devices across the plan set instead of tallying by hand, then add home-run lengths. Show a lighting plan with symbols counted automatically — that's hours back per bid.",
+    tip: "Demo symbol/device counting on a lighting or power plan.",
+    fant: ["F", "N"],
+    vestt: ["S", "T1"],
+    keywords: ["electrical", "fixtures", "devices", "lighting", "conduit", "panel"],
+  },
+  gc: {
+    id: "gc",
+    tag: "Trade fit",
+    category: "trade",
+    heading: "General Contractor",
+    signal: "Multi-trade scope — breadth and revision churn are the pain.",
+    talkTrack:
+      "GCs feel two pains: scoping a whole plan set fast, and keeping up with revisions. Show how quickly Togal scopes multiple trades and then compares revisions side-by-side so nothing slips between addenda. Breadth + revision comparison is the GC story.",
+    tip: "Demo multi-trade scoping + revision comparison.",
+    fant: ["F", "N"],
+    vestt: ["S", "T1"],
+    keywords: ["general contractor", "gc", "self perform", "multi trade", "multi-trade"],
+  },
+  painting: {
+    id: "painting",
+    tag: "Trade fit",
+    category: "trade",
+    heading: "Painting / Wallpaper",
+    signal: "Wall and ceiling areas, broken out by room.",
+    talkTrack:
+      "Show area auto-detect with room segmentation: Togal pulls wall and ceiling areas per room so you get paintable square footage without measuring every space by hand. That room-by-room breakout is exactly how painters bid.",
+    tip: "Demo wall/ceiling area by room with segmentation.",
+    fant: ["F", "N"],
+    vestt: ["S", "T1"],
+    keywords: ["painting", "paint", "wallpaper", "coatings", "wall covering"],
+  },
+
+  /* ---- Roles ---- */
+  owner: {
+    id: "owner",
+    tag: "Role",
+    category: "role",
+    heading: "Owner / Principal",
+    signal: "Decision-maker — speaks ROI, growth, and win rate.",
+    talkTrack:
+      "Talk business outcomes, not features: more bids out the door, higher win rate, less overtime and burnout on the estimating team. Owners buy growth. Quantify it — 'bid X% more jobs without adding headcount' — and they lean in.",
+    tip: "Sell growth + win rate. This is your Authority signal.",
+    fant: ["A"],
+    vestt: ["V", "T2"],
+    keywords: ["owner", "principal", "founder", "president", "ceo"],
+  },
+  estimator: {
+    id: "estimator",
+    tag: "Role",
+    category: "role",
+    heading: "Estimator",
+    signal: "The end user — cares about time, ease, and accuracy.",
+    talkTrack:
+      "Speak to their day: less tracing, fewer late nights, numbers they can trust. Let them drive in the demo — when an estimator runs their own takeoff and sees it land, you've got a champion who'll sell internally for you.",
+    tip: "Make them the hero — hands on keyboard in the demo.",
+    fant: ["N"],
+    vestt: ["S", "T1"],
+    keywords: ["estimator", "takeoff person", "i do the takeoffs", "i estimate"],
+  },
+  "pm-precon": {
+    id: "pm-precon",
+    tag: "Role",
+    category: "role",
+    heading: "PM / Preconstruction",
+    signal: "Owns speed-to-bid and coordination across revisions.",
+    talkTrack:
+      "Lead with speed-to-bid and revision control: Togal compresses takeoff turnaround and compares drawing revisions so scope changes don't slip. Precon lives and dies by deadlines — frame Togal as the way to hit more of them with the same team.",
+    tip: "Sell turnaround time + revision comparison.",
+    fant: ["F", "N"],
+    vestt: ["E", "T1"],
+    keywords: ["pm", "project manager", "precon", "preconstruction", "estimating manager"],
+  },
+  "bid-volume": {
+    id: "bid-volume",
+    tag: "Discovery",
+    category: "role",
+    heading: "Bid volume",
+    signal: "Sizing the value — volume turns time saved into dollars.",
+    talkTrack:
+      "Get the numbers: 'How many bids a month? What's your win rate? How many do you skip for lack of time?' Volume is the multiplier — every hour Togal saves per takeoff scales across every bid. This is your discovery anchor for the whole ROI case.",
+    tip: "Ask bids/month + win rate. Volume drives the ROI math.",
+    fant: ["N", "A"],
+    vestt: ["V"],
+    keywords: ["bid volume", "how many bids", "bids a month", "win rate", "volume"],
+  },
+};
+
+/* ------------------------------------------------------------------ */
+/*  Seed transcript (matches the screenshot)                           */
+/* ------------------------------------------------------------------ */
+
+export const SEED_TRANSCRIPT: string[] = [
+  "We use Bluebeam in every workflow.",
+  "We need to think about it internally.",
+  "We do painting and wallpaper.",
+  "Can you just send me some information?",
+];
+
+/* ------------------------------------------------------------------ */
+/*  Free-text matching                                                 */
+/* ------------------------------------------------------------------ */
+
+/** Find the coaching card whose keywords best match a free-text utterance. */
+export function matchUtterance(text: string): CoachingCard | null {
+  const t = text.toLowerCase();
+  let best: { card: CoachingCard; score: number } | null = null;
+  for (const card of Object.values(COACHING)) {
+    for (const kw of card.keywords) {
+      if (t.includes(kw)) {
+        const score = kw.length; // prefer the longest / most specific match
+        if (!best || score > best.score) best = { card, score };
+      }
+    }
+  }
+  return best ? best.card : null;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Composed action scripts                                            */
+/* ------------------------------------------------------------------ */
+
+export interface ActionContext {
+  competitor?: CoachingCard;
+  trade?: CoachingCard;
+  role?: CoachingCard;
+  fant: Record<FantKey, boolean>;
+  vestt: Record<VesttKey, boolean>;
+}
+
+export interface GuidanceBlock {
+  tag: string;
+  heading: string;
+  body: string[];
+}
+
+const fantMissing = (fant: Record<FantKey, boolean>) =>
+  FANT.filter((f) => !fant[f.key]).map((f) => f.full);
+
+const vesttMissing = (vestt: Record<VesttKey, boolean>) =>
+  VESTT.filter((v) => !vestt[v.key]).map((v) => v.full);
+
+export function buildAction(action: string, ctx: ActionContext): GuidanceBlock {
+  const tradeName = ctx.trade?.heading ?? "their trade";
+  const compName = ctx.competitor?.heading ?? "their current tool";
+
+  switch (action) {
+    case "book-demo":
+      return {
+        tag: "Book demo",
+        heading: "Lock the live demo",
+        body: [
+          `Ask for 15 minutes on their own drawings — that's where the value lands.`,
+          `Script: "Let's not talk theory — send me one plan set you're bidding and I'll run the takeoff live while you watch. Does Thursday at 2 or Friday morning work better?"`,
+          `Give a binary choice of times, not an open "when are you free?".`,
+          ctx.trade
+            ? `Tailor it: for ${tradeName}, tee up ${ctx.trade.tip ?? "a takeoff on their plan type"}.`
+            : `Confirm their trade first so you can tailor the demo plan.`,
+        ],
+      };
+
+    case "fant-vestt": {
+      const fMiss = fantMissing(ctx.fant);
+      const vMiss = vesttMissing(ctx.vestt);
+      return {
+        tag: "FANT + VESTT brief",
+        heading: "Where this call stands",
+        body: [
+          fMiss.length
+            ? `FANT — still need: ${fMiss.join(", ")}. Drive questions there next.`
+            : `FANT — fully qualified. This is a real, ready opportunity.`,
+          vMiss.length
+            ? `VESTT — not yet done: ${vMiss.join(", ")}. Don't close before you Show.`
+            : `VESTT — full motion complete. Go for the trial close.`,
+          ctx.competitor
+            ? `Competitor in play: ${compName}. Keep the battlecard handy.`
+            : `No competitor named yet — ask what they use today.`,
+          ctx.role
+            ? `Speaking with: ${ctx.role.heading}. ${ctx.role.tip ?? ""}`
+            : `Confirm the role/authority of who you're on with.`,
+        ],
+      };
+    }
+
+    case "demo-close":
+      return {
+        tag: "Demo close",
+        heading: "Close the demo cleanly",
+        body: [
+          `Trial close: "Based on what you just saw on your own plan — is there any reason this wouldn't save your team hours per bid?"`,
+          `Stay silent after you ask. Let them answer.`,
+          `If yes-but: isolate the one blocker and handle it; don't re-pitch the whole tool.`,
+          ctx.role?.id === "owner"
+            ? `They're the owner — go straight to next steps and terms.`
+            : `If they're not the decision-maker, ask: "Who else needs to see this before you'd move?"`,
+        ],
+      };
+
+    case "battlecard":
+      return ctx.competitor
+        ? {
+            tag: "Battlecard",
+            heading: ctx.competitor.heading,
+            body: [
+              `Signal: ${ctx.competitor.signal}`,
+              ctx.competitor.talkTrack,
+              ctx.competitor.tip ? `Tip: ${ctx.competitor.tip}` : "",
+            ].filter(Boolean),
+          }
+        : {
+            tag: "Battlecard",
+            heading: "No competitor detected yet",
+            body: [
+              `Ask the discovery question first: "What are you using for takeoffs today?"`,
+              `Then tap the competitor's chip — Bluebeam, STACK, PlanSwift/OST, Procore/Autodesk, Beam AI, or Edge/Sage — for the matching battlecard.`,
+            ],
+          };
+
+    case "follow-up": {
+      const trade = ctx.trade ? ctx.trade.heading.toLowerCase() : "your trade";
+      return {
+        tag: "Follow-up",
+        heading: "Follow-up email draft",
+        body: [
+          `Subject: Your takeoff, in minutes — quick recap`,
+          `Hi [Name], great talking today. You mentioned takeoffs are eating time on ${trade} work — that's exactly what Togal is built for: it auto-detects, measures, and compares drawings at up to 98% accuracy.`,
+          ctx.competitor
+            ? `Since you're on ${compName}, I'll show how teams keep what works and let Togal handle the measuring.`
+            : `On our next call I'll run the takeoff live on one of your plan sets.`,
+          `Next step: send me a plan set you're bidding and I'll have a live takeoff ready for [day/time]. — [You]`,
+        ],
+      };
+    }
+
+    default:
+      return { tag: "Coach", heading: "Pick an action", body: ["Choose an action below."] };
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Helpers                                                            */
+/* ------------------------------------------------------------------ */
+
+export const chipsByCategory = (cat: ChipCategory): Chip[] =>
+  CHIPS.filter((c) => c.category === cat);
+
+/* ------------------------------------------------------------------ */
+/*  FANT qualify — scorecard questions                                 */
+/* ------------------------------------------------------------------ */
+
+export const FANT_THRESHOLD = 2; // checks needed to qualify a dimension
+
+export const FANT_QUESTIONS: Record<FantKey, string[]> = {
+  F: [
+    "They do trade work Togal measures well — areas, counts, or linear runs.",
+    "They bid from drawings / plan sets on a regular basis.",
+    "Plan and bid volume is high enough for the time savings to matter.",
+  ],
+  A: [
+    "You're talking with the decision-maker or economic buyer.",
+    "If not, there's a clear, named path to that person.",
+    "You know who else has to sign off on a purchase.",
+  ],
+  N: [
+    "Takeoff time is a named pain — hours or days per bid.",
+    "They lose or skip bids for lack of estimating capacity.",
+    "Accuracy or rework on quantities is a stated concern.",
+  ],
+  T: [
+    "There's an active bid or deadline creating urgency.",
+    "A budget cycle or busy season is pushing a decision now.",
+    "A compelling event happened — lost bid, new hire, growth target.",
+  ],
+};
+
+/* ------------------------------------------------------------------ */
+/*  Call script — opener + VESTT stage talk tracks                     */
+/* ------------------------------------------------------------------ */
+
+export const OPENER = {
+  title: "Open",
+  goal: "Earn the next 10 minutes and find out who you're talking to.",
+  lines: [
+    `"Thanks for hopping on. Quick context: Togal does AI takeoff — it auto-detects, measures, and compares your drawings, up to 98% accuracy."`,
+    `"Before I show anything — what's your role in the takeoff and estimating process today?"`,
+    `"And what are you using for takeoffs right now?"`,
+  ],
+};
+
+export const VESTT_SCRIPT: Record<
+  VesttKey,
+  { title: string; goal: string; lines: string[] }
+> = {
+  V: {
+    title: "Verify pain",
+    goal: "Confirm the takeoff problem in their own words.",
+    lines: [
+      `"Walk me through a typical takeoff — how long does a plan set take you today?"`,
+      `"How many bids a month do you walk away from because there isn't time?"`,
+      `"Where does it hurt most — speed, accuracy, or capacity?"`,
+    ],
+  },
+  E: {
+    title: "Educate",
+    goal: "Explain how Togal works — detection, not a chatbot.",
+    lines: [
+      `"Togal's detection is purpose-built computer vision trained on real construction drawings — not a generic AI."`,
+      `"It finds areas and counts automatically; you verify and adjust any region. You stay in control of every number."`,
+      `"It also compares revisions side-by-side, so nothing slips between addenda."`,
+    ],
+  },
+  S: {
+    title: "Show",
+    goal: "Run a live takeoff on their own drawings.",
+    lines: [
+      `"Let's not talk theory — pull up one of your plan sets and I'll run it live."`,
+      `"Watch this: drop the plan, click detect… there are your areas and counts in seconds."`,
+      `"That takeoff that's an afternoon of clicking? That's it."`,
+    ],
+  },
+  T1: {
+    title: "Tailor",
+    goal: "Map the value to their trade and role.",
+    lines: [
+      `"For your trade, the win is the auto-detected areas, counts, or linear runs — exactly how you bid."`,
+      `"As the owner / estimator / PM, what this means for you is more bids, fewer late nights, faster turnaround."`,
+    ],
+  },
+  T2: {
+    title: "Trial close",
+    goal: "Lock the next step before the call ends.",
+    lines: [
+      `"Based on what you just saw — any reason this wouldn't save your team hours per bid?"`,
+      `"Who else needs to see this before you'd move forward?"`,
+      `"Let's get a pilot on your next live bid. Does Thursday or Friday work to set it up?"`,
+    ],
+  },
+};
+
+/* ------------------------------------------------------------------ */
+/*  Dangerous software — competitive landscape watch list              */
+/* ------------------------------------------------------------------ */
+
+export type ThreatLevel = "high" | "medium" | "low";
+
+export const COMPETITOR_INTEL: Record<
+  string,
+  { level: ThreatLevel; what: string }
+> = {
+  bluebeam: {
+    level: "high",
+    what: "PDF markup & collaboration — deeply entrenched in the daily workflow.",
+  },
+  stack: {
+    level: "high",
+    what: "Cloud takeoff & estimating with strong brand recognition.",
+  },
+  planswift: {
+    level: "medium",
+    what: "Legacy on-screen, click-by-click manual takeoff.",
+  },
+  procore: {
+    level: "medium",
+    what: "Project & construction-management platform — not a takeoff tool.",
+  },
+  "beam-ai": {
+    level: "medium",
+    what: "Another AI-takeoff entrant competing on the same promise.",
+  },
+  "edge-sage": {
+    level: "low",
+    what: "Downstream estimating / costing systems that Togal feeds.",
+  },
+};
+
+/* ------------------------------------------------------------------ */
+/*  Role plays — practice prompts                                      */
+/* ------------------------------------------------------------------ */
+
+export const PRACTICE_LINES: Record<string, string> = {
+  bluebeam: "We use Bluebeam in every workflow, so we're pretty set.",
+  stack: "We're already on STACK for our takeoffs.",
+  planswift: "We've used PlanSwift for years — it works fine.",
+  procore: "Everything runs through Procore for us.",
+  "beam-ai": "We're already taking a look at Beam AI.",
+  "edge-sage": "Our estimating all lives in The EDGE.",
+  "no-budget": "There's just no budget for new software right now.",
+  "dont-trust-ai": "Honestly, I don't trust AI with our numbers.",
+  "too-busy": "We're slammed — I don't have time for this right now.",
+  "just-info": "Can you just send me some information?",
+  "tried-ai": "We tried an AI takeoff tool before and it didn't work.",
+  "have-estimators": "We already have estimators who handle all this.",
+  "too-complex": "This sounds complicated to roll out.",
+  "need-think": "We need to think about it internally.",
+  "claude-llm": "Is this just ChatGPT under the hood?",
+  "it-security": "Our IT team will need to review the security first.",
+};
+
+export interface RolePlay {
+  id: string;
+  prompt: string;
+  card: CoachingCard;
+}
+
+export function rolePlaysByCategory(cat: ChipCategory): RolePlay[] {
+  return Object.entries(PRACTICE_LINES)
+    .filter(([id]) => COACHING[id]?.category === cat)
+    .map(([id, prompt]) => ({ id, prompt, card: COACHING[id] }));
+}
