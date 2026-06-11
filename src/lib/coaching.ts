@@ -771,3 +771,203 @@ export function rolePlaysByCategory(cat: ChipCategory): RolePlay[] {
     .filter(([id]) => COACHING[id]?.category === cat)
     .map(([id, prompt]) => ({ id, prompt, card: COACHING[id] }));
 }
+
+/* ------------------------------------------------------------------ */
+/*  Post-call analysis — local heuristic scoring of a transcript       */
+/* ------------------------------------------------------------------ */
+
+export interface CallMoment {
+  line: string; // the transcript line where the signal was detected
+  card: CoachingCard;
+}
+
+export interface TranscriptAnalysis {
+  fantCovered: FantKey[];
+  vesttCovered: VesttKey[];
+  fantScore: number; // 0–4
+  vesttScore: number; // 0–5
+  overall: number; // 0–100
+  moments: CallMoment[];
+  gaps: string[]; // dimensions never reached → what to work on
+}
+
+/**
+ * Scan a pasted transcript for the objections, competitors, trades and roles
+ * in the knowledge base, then score how much of the FANT/VESTT motion the rep
+ * touched. Heuristic + offline — the live AI replay is a later add.
+ */
+export function analyzeTranscript(text: string): TranscriptAnalysis {
+  const lines = text
+    .split(/\r?\n+/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+  const lower = text.toLowerCase();
+
+  const moments: CallMoment[] = [];
+  const seen = new Set<string>();
+  const fantSet = new Set<FantKey>();
+  const vesttSet = new Set<VesttKey>();
+
+  for (const card of Object.values(COACHING)) {
+    const kw = card.keywords.find((k) => lower.includes(k));
+    if (kw && !seen.has(card.id)) {
+      seen.add(card.id);
+      const line = lines.find((l) => l.toLowerCase().includes(kw)) ?? "";
+      moments.push({ line, card });
+      card.fant?.forEach((k) => fantSet.add(k));
+      card.vestt?.forEach((k) => vesttSet.add(k));
+    }
+  }
+
+  const fantCovered = FANT.map((f) => f.key).filter((k) => fantSet.has(k));
+  const vesttCovered = VESTT.map((v) => v.key).filter((k) => vesttSet.has(k));
+  const overall = Math.round(
+    ((fantCovered.length / 4 + vesttCovered.length / 5) / 2) * 100
+  );
+
+  const gaps: string[] = [];
+  FANT.filter((f) => !fantSet.has(f.key)).forEach((f) =>
+    gaps.push(`FANT — ${f.full}: ${f.hint}`)
+  );
+  VESTT.filter((v) => !vesttSet.has(v.key)).forEach((v) =>
+    gaps.push(`VESTT — ${v.full}: ${v.hint}`)
+  );
+
+  return {
+    fantCovered,
+    vesttCovered,
+    fantScore: fantCovered.length,
+    vesttScore: vesttCovered.length,
+    overall,
+    moments,
+    gaps,
+  };
+}
+
+/** A short, multi-signal transcript for the "Load sample" button. */
+export const SAMPLE_TRANSCRIPT = [
+  "Rep: Morning! Appreciate the few minutes. What are you using for takeoffs today?",
+  "Prospect: We've run PlanSwift for years — it works fine.",
+  "Rep: Makes sense. How long does a typical plan set take your team?",
+  "Prospect: A big job can eat most of a day of clicking, honestly.",
+  "Rep: That's the part Togal automates. Have you tried any AI takeoff tools?",
+  "Prospect: I don't really trust AI to get our numbers right.",
+  "Prospect: And we're slammed this month, so I don't have much time.",
+  "Rep: Fair. What if you could verify every detected region yourself?",
+  "Prospect: Maybe. Just send me some info and I'll take a look.",
+].join("\n");
+
+/* ------------------------------------------------------------------ */
+/*  Practice scenario — configurable live-roleplay setup               */
+/* ------------------------------------------------------------------ */
+
+export const SCENARIO_PROSPECT_TYPES = [
+  "Owner — drywall sub",
+  "Owner — painting/wallpaper",
+  "Estimator — concrete",
+  "Estimator — electrical",
+  "PM/Precon — general contractor",
+  "Owner — retaining walls",
+];
+
+export interface ScenarioObjection {
+  id: string;
+  label: string;
+  opener: string; // how the prospect opens the call
+  coaching: string[]; // how to handle it
+}
+
+export const SCENARIO_OBJECTIONS: ScenarioObjection[] = [
+  {
+    id: "happy",
+    label: "Happy with current tool",
+    opener: "Honestly, we're happy with what we've got.",
+    coaching: [
+      "They're not in pain yet — your job is to create contrast.",
+      "Ask what their current tool can't do, then show that gap on their plans.",
+      "Offer a head-to-head takeoff on a live bid.",
+    ],
+  },
+  {
+    id: "no-budget",
+    label: "No budget",
+    opener: "There's just no budget for new software right now.",
+    coaching: [
+      "Anchor to ROI, not price.",
+      "Quantify: what's a won bid worth, and how many do they skip for lack of time?",
+    ],
+  },
+  {
+    id: "dont-trust",
+    label: "Don't trust AI",
+    opener: "I don't trust AI with our numbers.",
+    coaching: [
+      "Reframe as a verifiable co-pilot — they verify every region.",
+      "Show correcting a detected region live so oversight feels easy.",
+    ],
+  },
+  {
+    id: "too-busy",
+    label: "Too busy",
+    opener: "We're slammed — I don't have time for this right now.",
+    coaching: [
+      "Turn 'busy' into urgency: takeoffs are what's eating the week.",
+      "Ask for 15 minutes on a live plan set.",
+    ],
+  },
+  {
+    id: "tried-ai",
+    label: "Tried AI before",
+    opener: "We tried an AI takeoff tool before and it didn't work.",
+    coaching: [
+      "Diagnose the prior failure first.",
+      "Differentiate: built by estimators, auto-detect, revision comparison.",
+    ],
+  },
+  {
+    id: "estimators",
+    label: "We have estimators",
+    opener: "We already have estimators who handle all this.",
+    coaching: [
+      "Position as a force-multiplier, not a replacement.",
+      "More bids per estimator, fewer late nights.",
+    ],
+  },
+  {
+    id: "need-think",
+    label: "Need to think about it",
+    opener: "We'll need to think about it internally.",
+    coaching: [
+      "Surface the real blocker — info, a stakeholder, or confidence.",
+      "Convert the stall into a scheduled next step with the right people.",
+    ],
+  },
+];
+
+export type Difficulty = "Easy" | "Challenging" | "Hard";
+
+export const DIFFICULTY_NOTE: Record<Difficulty, string> = {
+  Easy: "Receptive and chatty. Gives you room — use it to practice your structure.",
+  Challenging: "Guarded. Pushes back once or twice before opening up.",
+  Hard: "Curt and skeptical. Short answers, ready to end the call — earn every minute.",
+};
+
+export interface Scenario {
+  title: string;
+  opener: string;
+  persona: string;
+  coaching: string[];
+}
+
+export function buildScenario(
+  prospectType: string,
+  objection: ScenarioObjection,
+  difficulty: Difficulty
+): Scenario {
+  return {
+    title: `${prospectType} · ${objection.label} · ${difficulty}`,
+    opener: objection.opener,
+    persona: `${prospectType}. ${DIFFICULTY_NOTE[difficulty]}`,
+    coaching: objection.coaching,
+  };
+}

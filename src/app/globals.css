@@ -450,6 +450,99 @@ select.cc-field {
   color: #b9ecc7;
 }
 
+/* ---- secondary sub-tab nav (inside Role plays) ---- */
+.subtab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 11px 4px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--fg-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color var(--ease-snap) 160ms;
+}
+.subtab:hover {
+  color: var(--fg);
+}
+.subtab.is-active {
+  color: var(--fg);
+}
+.subtab.is-active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--fg);
+  border-radius: 2px;
+}
+
+/* ---- difficulty toggle pills ---- */
+.diff {
+  padding: 7px 16px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--fg-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--ease-snap) 160ms;
+}
+.diff:hover {
+  color: var(--fg);
+  border-color: #4a4a52;
+}
+.diff.is-active {
+  background: var(--denim-soft);
+  border-color: var(--denim);
+  color: #cfe0ff;
+  box-shadow: 0 0 0 1px var(--denim);
+}
+
+/* ---- primary (denim) action button ---- */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--denim);
+  background: var(--denim-soft);
+  color: #cfe0ff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--ease-snap) 160ms;
+}
+.btn-primary:hover {
+  background: rgba(106, 163, 255, 0.22);
+}
+.btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ---- score pills (post-call header) ---- */
+.score-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg-muted);
+}
+
 /* ---- BDR booking cards (Book demo tab) ---- */
 .book-card {
   border-radius: var(--r-lg);
