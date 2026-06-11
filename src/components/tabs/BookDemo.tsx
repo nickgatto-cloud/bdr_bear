@@ -1,218 +1,140 @@
-import { useState } from "react";
-import { COACHING, chipsByCategory } from "@/lib/coaching";
+import type { ReactNode } from "react";
+import { BDRS, type Segment } from "@/lib/reps";
 
-const SLOTS = [
-  "Tue 10:00 AM",
-  "Tue 2:00 PM",
-  "Wed 11:00 AM",
-  "Thu 9:00 AM",
-  "Thu 2:00 PM",
-  "Fri 10:00 AM",
+type Accent = "denim" | "orange" | "green";
+
+const SEGMENTS: { key: Segment; label: string; accent: Accent; icon: ReactNode }[] = [
+  { key: "Mid Market", label: "MID MARKET", accent: "denim", icon: <BuildingIcon /> },
+  { key: "Strategic", label: "STRATEGIC", accent: "orange", icon: <StarIcon /> },
+  { key: "SMB", label: "SMB", accent: "green", icon: <UsersIcon /> },
 ];
 
-export interface BookDemoDefaults {
-  tradeId?: string;
-  roleId?: string;
-  competitorId?: string;
+export default function BookDemo() {
+  return (
+    <div className="px-7 py-6 space-y-7">
+      {SEGMENTS.map((seg) => {
+        const reps = BDRS.filter((b) => b.segment === seg.key);
+        if (!reps.length) return null;
+        return (
+          <section key={seg.key}>
+            {/* section header with hairline */}
+            <div className="flex items-center gap-2 mb-4 text-[var(--fg-muted)]">
+              {seg.icon}
+              <span className="text-xs font-semibold tracking-[0.12em]">
+                {seg.label}
+              </span>
+              <div className="flex-1 h-px bg-[var(--border)] ml-2" />
+            </div>
+
+            {/* rep cards — flex so each segment's cards fill the row */}
+            <div className="flex flex-wrap gap-4">
+              {reps.map((rep) => (
+                <div
+                  key={rep.name}
+                  className="book-card flex-1 min-w-[240px] flex flex-col"
+                >
+                  <div className="text-lg font-semibold text-[var(--fg)]">
+                    {rep.name}
+                  </div>
+                  <div className="text-[13px] text-[var(--fg-muted)] mb-4">
+                    {rep.segment}
+                  </div>
+                  <a
+                    href={rep.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="book-btn mt-auto"
+                    data-accent={seg.accent}
+                  >
+                    <CalendarIcon />
+                    Book with {rep.name}
+                  </a>
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+      })}
+    </div>
+  );
 }
 
-export default function BookDemo({ defaults }: { defaults: BookDemoDefaults }) {
-  const trades = chipsByCategory("trade");
-  const roles = chipsByCategory("role").filter((c) => c.id !== "bid-volume");
-  const competitors = chipsByCategory("competitor");
+/* ---- inline icons (Lucide-style, recolour via currentColor) ---- */
 
-  const [name, setName] = useState("");
-  const [company, setCompany] = useState("");
-  const [tradeId, setTradeId] = useState(defaults.tradeId ?? "");
-  const [roleId, setRoleId] = useState(defaults.roleId ?? "");
-  const [competitorId, setCompetitorId] = useState(defaults.competitorId ?? "");
-  const [slot, setSlot] = useState("");
-  const [copied, setCopied] = useState(false);
-
-  const tradeCard = tradeId ? COACHING[tradeId] : undefined;
-  const compCard = competitorId ? COACHING[competitorId] : undefined;
-
-  const focus =
-    tradeCard?.tip ?? "Confirm their trade so you can tailor the live takeoff.";
-  const compNote = compCard
-    ? compCard.tip ?? compCard.signal
-    : "Ask what they use today so you keep what works and add the takeoff engine.";
-
-  const ready = Boolean(name.trim() && slot);
-  const firstName = name.trim().split(/\s+/)[0] || "there";
-  const confirmation =
-    `Hi ${firstName}, confirming your Togal.AI demo for ${slot || "[time]"}.\n\n` +
-    `We'll run a live takeoff on one of ${company.trim() || "your team"}'s own plan sets — ` +
-    `bring a drawing you're actively bidding. I'll focus on ` +
-    `${tradeCard ? tradeCard.heading.toLowerCase() : "your trade"} so you see exactly how it fits your workflow.\n\n` +
-    `It takes 15 minutes. Talk soon — [You]`;
-
-  const copy = () => {
-    navigator.clipboard?.writeText(confirmation).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1600);
-    });
-  };
-
+function CalendarIcon() {
   return (
-    <div className="px-7 py-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-7">
-        {/* ---- form ---- */}
-        <section>
-          <h2 className="text-sm font-semibold tracking-[0.12em] text-[var(--fg-muted)] mb-4">
-            DEMO DETAILS
-          </h2>
-          <div className="cc-panel p-6 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="cc-label">Prospect name</label>
-                <input
-                  className="cc-field"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Maria Lopez"
-                />
-              </div>
-              <div>
-                <label className="cc-label">Company</label>
-                <input
-                  className="cc-field"
-                  value={company}
-                  onChange={(e) => setCompany(e.target.value)}
-                  placeholder="e.g. Lopez Drywall Co."
-                />
-              </div>
-            </div>
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M16 2v4M8 2v4M3 10h18" />
+    </svg>
+  );
+}
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="cc-label">Trade</label>
-                <select
-                  className="cc-field"
-                  value={tradeId}
-                  onChange={(e) => setTradeId(e.target.value)}
-                >
-                  <option value="">Select trade…</option>
-                  {trades.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="cc-label">Role</label>
-                <select
-                  className="cc-field"
-                  value={roleId}
-                  onChange={(e) => setRoleId(e.target.value)}
-                >
-                  <option value="">Select role…</option>
-                  {roles.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+function BuildingIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M3 21h18" />
+      <rect x="6" y="3" width="12" height="18" rx="1" />
+      <path d="M9 7h.01M15 7h.01M9 11h.01M15 11h.01M9 15h.01M15 15h.01" />
+    </svg>
+  );
+}
 
-            <div>
-              <label className="cc-label">Current takeoff tool</label>
-              <select
-                className="cc-field"
-                value={competitorId}
-                onChange={(e) => setCompetitorId(e.target.value)}
-              >
-                <option value="">Select tool…</option>
-                {competitors.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+function StarIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26" />
+    </svg>
+  );
+}
 
-            <div>
-              <label className="cc-label">Suggested time</label>
-              <div className="flex flex-wrap gap-3">
-                {SLOTS.map((s) => (
-                  <button
-                    key={s}
-                    className={`cc-slot ${slot === s ? "is-active" : ""}`}
-                    onClick={() => setSlot(s)}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ---- live brief ---- */}
-        <section>
-          <h2 className="text-sm font-semibold tracking-[0.12em] text-[var(--fg-muted)] mb-4">
-            DEMO BRIEF
-          </h2>
-          <div className="cc-panel p-6 space-y-5">
-            <div className="flex items-center justify-between">
-              <span className="text-[var(--fg)] text-lg font-semibold">
-                {company.trim() || "New prospect"}
-              </span>
-              <span className={`cc-pill ${ready ? "cc-pill--ok" : "cc-pill--open"}`}>
-                {ready ? "Ready to confirm" : "Incomplete"}
-              </span>
-            </div>
-
-            <div>
-              <div className="cc-label">Tailor the demo to</div>
-              <p className="text-[var(--fg)] text-[15px]">
-                {tradeCard ? tradeCard.heading : "their trade"}
-                {roleId && COACHING[roleId]
-                  ? ` · ${COACHING[roleId].heading}`
-                  : ""}
-              </p>
-            </div>
-
-            <div
-              className="rounded-lg p-4 bg-[var(--surface)]"
-              style={{ borderLeft: "3px solid var(--green)" }}
-            >
-              <div className="cc-label" style={{ color: "var(--green)" }}>
-                Recommended focus
-              </div>
-              <p className="text-[var(--fg-muted)] text-[15px] leading-relaxed">
-                {focus}
-              </p>
-            </div>
-
-            <div
-              className="rounded-lg p-4 bg-[var(--surface)]"
-              style={{ borderLeft: "3px solid var(--orange)" }}
-            >
-              <div className="cc-label" style={{ color: "var(--orange)" }}>
-                {compCard ? `Vs. ${compCard.heading}` : "Incumbent tool"}
-              </div>
-              <p className="text-[var(--fg-muted)] text-[15px] leading-relaxed">
-                {compNote}
-              </p>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <div className="cc-label mb-0">Confirmation message</div>
-                <button className="cc-btn cc-btn--accent" onClick={copy}>
-                  {copied ? "Copied ✓" : "Copy"}
-                </button>
-              </div>
-              <pre className="whitespace-pre-wrap rounded-lg bg-[var(--surface)] border border-[var(--border)] p-4 text-[var(--fg-muted)] text-[14px] leading-relaxed font-sans">
-                {confirmation}
-              </pre>
-            </div>
-          </div>
-        </section>
-      </div>
-    </div>
+function UsersIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
   );
 }

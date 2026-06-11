@@ -387,15 +387,7 @@ export default function CallCoach() {
             toggleVestt={toggleVestt}
           />
         )}
-        {tab === "book-demo" && (
-          <BookDemo
-            defaults={{
-              tradeId: ctx.trade?.id,
-              roleId: ctx.role?.id,
-              competitorId: ctx.competitor?.id,
-            }}
-          />
-        )}
+        {tab === "book-demo" && <BookDemo />}
         {tab === "fant" && (
           <FantQualify
             key={resetNonce}

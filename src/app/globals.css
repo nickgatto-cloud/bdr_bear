@@ -450,6 +450,57 @@ select.cc-field {
   color: #b9ecc7;
 }
 
+/* ---- BDR booking cards (Book demo tab) ---- */
+.book-card {
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 18px 18px 16px;
+  transition: border-color var(--ease-snap) 160ms;
+}
+.book-card:hover {
+  border-color: var(--border-strong);
+}
+
+.book-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--fg-muted);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all var(--ease-snap) 160ms;
+}
+.book-btn[data-accent="denim"] {
+  border-color: var(--denim);
+  color: #a9c8ff;
+}
+.book-btn[data-accent="denim"]:hover {
+  background: var(--denim-soft);
+}
+.book-btn[data-accent="orange"] {
+  border-color: var(--orange);
+  color: #f6c089;
+}
+.book-btn[data-accent="orange"]:hover {
+  background: var(--orange-soft);
+}
+.book-btn[data-accent="green"] {
+  border-color: var(--green);
+  color: #9be0ad;
+}
+.book-btn[data-accent="green"]:hover {
+  background: var(--green-soft);
+}
+
 /* AI detection sweep on guidance entrance */
 @keyframes ccFadeUp {
   from {
