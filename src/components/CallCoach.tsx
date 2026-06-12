@@ -50,6 +50,8 @@ interface TranscriptLine {
 interface GuidanceEntry extends GuidanceBlock {
   key: number;
   accent: "green" | "orange" | "denim" | "purple" | "neutral";
+  /** the chip this card came from; deselecting that chip removes the card */
+  sourceChipId?: string;
 }
 
 const ACCENT_BY_CATEGORY: Record<string, GuidanceEntry["accent"]> = {
@@ -206,9 +208,10 @@ export default function CallCoach() {
   }, []);
 
   const pushCard = useCallback(
-    (card: CoachingCard) => {
+    (card: CoachingCard, sourceChipId?: string) => {
       const entry: GuidanceEntry = {
         key: guidanceKey.current++,
+        sourceChipId,
         tag: card.tag,
         heading: card.heading,
         accent: ACCENT_BY_CATEGORY[card.category] ?? "neutral",
@@ -218,7 +221,12 @@ export default function CallCoach() {
           ...(card.tip ? [`Tip: ${card.tip}`] : []),
         ],
       };
-      setGuidance((g) => [entry, ...g]);
+      // don't stack a duplicate card for a chip that's already showing one
+      setGuidance((g) =>
+        sourceChipId && g.some((e) => e.sourceChipId === sourceChipId)
+          ? g
+          : [entry, ...g]
+      );
       applyCardToFrameworks(card);
     },
     [applyCardToFrameworks]
@@ -237,14 +245,20 @@ export default function CallCoach() {
   // ----- handlers -----
   const handleChip = useCallback(
     (chip: Chip) => {
+      const isActive = activeChips.has(chip.id);
       setActiveChips((prev) => {
         const next = new Set(prev);
         if (next.has(chip.id)) next.delete(chip.id);
         else next.add(chip.id);
         return next;
       });
-      const card = COACHING[chip.id];
-      if (card && !activeChips.has(chip.id)) pushCard(card);
+      if (isActive) {
+        // deselecting → clear this chip's coaching card from the window
+        setGuidance((g) => g.filter((e) => e.sourceChipId !== chip.id));
+      } else {
+        const card = COACHING[chip.id];
+        if (card) pushCard(card, chip.id);
+      }
     },
     [activeChips, pushCard]
   );
@@ -262,7 +276,7 @@ export default function CallCoach() {
     if (card) {
       // reflect the detected topic in the chip rail too
       setActiveChips((prev) => new Set(prev).add(card.id));
-      pushCard(card);
+      pushCard(card, card.id);
     } else {
       pushBlock(
         {
