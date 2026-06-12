@@ -50,11 +50,11 @@ export const FANT: { key: FantKey; label: string; full: string; hint: string }[]
 ];
 
 export const VESTT: { key: VesttKey; label: string; full: string; hint: string }[] = [
-  { key: "V", label: "V", full: "Verify pain", hint: "Confirm the takeoff problem in their words." },
-  { key: "E", label: "E", full: "Educate", hint: "How Togal auto-detects, measures, and compares." },
-  { key: "S", label: "S", full: "Show", hint: "Run a live takeoff on their own drawings." },
-  { key: "T1", label: "T", full: "Tailor", hint: "Map the value to their trade and role." },
-  { key: "T2", label: "T", full: "Trial close", hint: "Lock the next step before the call ends." },
+  { key: "V", label: "V", full: "Value", hint: "Lead with the outcome — time saved, bids won." },
+  { key: "E", label: "E", full: "Expert", hint: "Earn credibility — built by estimators, up to 98% accuracy." },
+  { key: "S", label: "S", full: "Structure", hint: "Run the call on a clear, deliberate path." },
+  { key: "T1", label: "T", full: "Triggers", hint: "Surface the compelling event creating urgency." },
+  { key: "T2", label: "T", full: "Tone", hint: "Read the room — consultative, match their energy." },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -638,8 +638,11 @@ export const FANT_QUESTIONS: Record<FantKey, string[]> = {
 };
 
 /* ------------------------------------------------------------------ */
-/*  Call script — opener + VESTT stage talk tracks                     */
+/*  Call script — VESTT mindset, opener, stages, post-call review      */
 /* ------------------------------------------------------------------ */
+
+export const VESTT_INTRO =
+  "The VESTT Framework is more than a checklist — it's a mindset. When you approach every conversation with Value, Expertise, Structure, Triggers, and Tone, you create consistency, confidence, and conversion.";
 
 export const OPENER = {
   title: "Open",
@@ -651,55 +654,101 @@ export const OPENER = {
   ],
 };
 
-export const VESTT_SCRIPT: Record<
-  VesttKey,
-  { title: string; goal: string; lines: string[] }
-> = {
+export interface VesttStage {
+  title: string;
+  tagline: string;
+  goal: string;
+  mindset?: string;
+  principles: string[];
+  lines: string[];
+}
+
+export const VESTT_SCRIPT: Record<VesttKey, VesttStage> = {
   V: {
-    title: "Verify pain",
-    goal: "Confirm the takeoff problem in their own words.",
+    title: "Value",
+    tagline: "Impact",
+    goal: "Identify and communicate your value early — solve pain, don't pitch features.",
+    principles: [
+      "Identify and communicate the value you bring early.",
+      "Focus on solving pain points, not just selling features.",
+      "Reinforce what makes Togal worth the buyer's attention and investment.",
+    ],
     lines: [
-      `"Walk me through a typical takeoff — how long does a plan set take you today?"`,
-      `"How many bids a month do you walk away from because there isn't time?"`,
-      `"Where does it hurt most — speed, accuracy, or capacity?"`,
+      `"Togal gets you takeoffs in minutes, not days — so you bid more work without adding headcount."`,
+      `"What would one or two more bids a month be worth to you?"`,
+      `"Everything I show you today ties back to time saved and bids won."`,
     ],
   },
   E: {
-    title: "Educate",
-    goal: "Explain how Togal works — detection, not a chatbot.",
+    title: "Expert",
+    tagline: "Builds trust",
+    goal: "Be the expert advisor — confidence and credibility move deals forward faster.",
+    principles: [
+      "Position yourself as an expert advisor, not a vendor.",
+      "Confidence and credibility move deals forward faster.",
+    ],
     lines: [
-      `"Togal's detection is purpose-built computer vision trained on real construction drawings — not a generic AI."`,
-      `"It finds areas and counts automatically; you verify and adjust any region. You stay in control of every number."`,
-      `"It also compares revisions side-by-side, so nothing slips between addenda."`,
+      `"Togal was built by estimators — we've sat in your seat, not just written software."`,
+      `"The detection is purpose-trained on real construction drawings, up to 98% accuracy."`,
+      `"Ask me anything about how it handles your trade — I'll give it to you straight."`,
     ],
   },
   S: {
-    title: "Show",
-    goal: "Run a live takeoff on their own drawings.",
+    title: "Structure",
+    tagline: "Control the conversation",
+    goal: "Use a clear framework for discovery and qualification toward the demo.",
+    principles: [
+      "Use a clear framework for discovery and qualification toward the demo.",
+      "Set expectations for every call — who, what, why, and next steps.",
+      "Structure creates consistency, predictability, and professionalism.",
+    ],
     lines: [
-      `"Let's not talk theory — pull up one of your plan sets and I'll run it live."`,
-      `"Watch this: drop the plan, click detect… there are your areas and counts in seconds."`,
-      `"That takeoff that's an afternoon of clicking? That's it."`,
+      `"Here's the plan for our 20 minutes: a couple of questions, a live takeoff on your plans, then next steps — sound good?"`,
+      `"Quick recap before we move on, so we're aligned…"`,
+      `"That covers discovery — let me show you on your own drawings now."`,
     ],
   },
   T1: {
-    title: "Tailor",
-    goal: "Map the value to their trade and role.",
+    title: "Triggers",
+    tagline: "Spark action with active listening",
+    goal: "Listen for the cues that signal urgency and readiness to demo.",
+    principles: [
+      "Identify triggers that drive urgency or next steps — timing, goals, external pressures, needs, blueprints, demo-now.",
+      "Use psychological and business triggers to inspire momentum.",
+      "Recognize the emotional or operational cues that signal readiness to demo.",
+    ],
     lines: [
-      `"For your trade, the win is the auto-detected areas, counts, or linear runs — exactly how you bid."`,
-      `"As the owner / estimator / PM, what this means for you is more bids, fewer late nights, faster turnaround."`,
+      `"What's making you look at this now versus six months ago?"`,
+      `"Any bids you've had to walk away from for lack of time?"`,
+      `"Is there a deadline, a new hire, or a growth target driving this?"`,
     ],
   },
   T2: {
-    title: "Trial close",
-    goal: "Lock the next step before the call ends.",
+    title: "Tone",
+    tagline: "Master your delivery",
+    goal: "Build connection through intentional communication — voice, empathy, and energy.",
+    mindset: "It's not just what you say — it's how you make them feel.",
+    principles: [
+      "Match the buyer's communication style — pace, tone, formality.",
+      "Speak with energy, confidence, and warmth.",
+      "Be comfortable with yourself.",
+    ],
     lines: [
-      `"Based on what you just saw — any reason this wouldn't save your team hours per bid?"`,
-      `"Who else needs to see this before you'd move forward?"`,
-      `"Let's get a pilot on your next live bid. Does Thursday or Friday work to set it up?"`,
+      `"Mirror their pace: crisp with a busy owner, thorough with a detail-driven estimator."`,
+      `"Stay a partner helping them bid more — not a vendor pushing software."`,
+      `"Confident, not salesy. Let the live takeoff do the selling."`,
     ],
   },
 };
+
+/** Self-review prompts shown at the end of the Call script tab. */
+export const POST_CALL_REVIEW = [
+  "Did I touch on value points?",
+  "Did I position myself as an expert by guiding the prospect?",
+  "Did I control the structure and flow?",
+  "Did I identify and use triggers effectively?",
+  "Did the call end with a booked demo, proper follow-up, or a disqualified prospect?",
+];
 
 /* ------------------------------------------------------------------ */
 /*  Dangerous software — competitive landscape watch list              */
