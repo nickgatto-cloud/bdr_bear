@@ -17,22 +17,43 @@ export default function CallScript({
 }) {
   const done = (Object.keys(vestt) as VesttKey[]).filter((k) => vestt[k]).length;
 
+  // which accordion items are expanded (all collapsed by default so every
+  // header is visible at a glance)
+  const [open, setOpen] = useState<Set<string>>(new Set());
+  const toggleOpen = (id: string) =>
+    setOpen((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const allIds = ["open", ...VESTT.map((s) => s.key)];
+  const allOpen = open.size === allIds.length;
+
   return (
     <div className="px-7 py-6">
       <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
         <div>
           <h2 className="text-xl font-semibold">Guided call script</h2>
           <p className="text-[var(--fg-muted)] text-[15px] mt-1">
-            Open, then work the VESTT motion. Mark each stage as you complete it —
-            it syncs with the live tracker.
+            Open, then work the VESTT motion. Expand any stage; mark it done as you
+            go — it syncs with the live tracker.
           </p>
         </div>
-        <div className="text-right">
-          <div className="text-3xl font-bold text-[var(--denim)] tabular-nums">
-            {done}
-            <span className="text-[var(--fg-dim)] text-xl">/5</span>
+        <div className="flex items-center gap-4">
+          <button
+            className="cc-btn"
+            onClick={() => setOpen(allOpen ? new Set() : new Set(allIds))}
+          >
+            {allOpen ? "Collapse all" : "Expand all"}
+          </button>
+          <div className="text-right">
+            <div className="text-3xl font-bold text-[var(--denim)] tabular-nums">
+              {done}
+              <span className="text-[var(--fg-dim)] text-xl">/5</span>
+            </div>
+            <div className="cc-label mb-0 mt-1">stages done</div>
           </div>
-          <div className="cc-label mb-0 mt-1">stages done</div>
         </div>
       </div>
 
@@ -49,14 +70,16 @@ export default function CallScript({
         </p>
       </div>
 
-      <div className="cc-scroll max-h-[520px] overflow-y-auto pr-2 space-y-4">
-        {/* opener — unchanged */}
+      <div className="cc-scroll max-h-[520px] overflow-y-auto pr-2 space-y-3">
+        {/* opener — unchanged content, now collapsible */}
         <ScriptCard
           badge="0"
           accent="var(--green)"
           title={OPENER.title}
           goal={OPENER.goal}
           lines={OPENER.lines}
+          isOpen={open.has("open")}
+          onExpand={() => toggleOpen("open")}
         />
 
         {/* VESTT stages */}
@@ -76,6 +99,8 @@ export default function CallScript({
               lines={script.lines}
               done={isDone}
               onToggle={() => setVesttValue(stage.key, !isDone)}
+              isOpen={open.has(stage.key)}
+              onExpand={() => toggleOpen(stage.key)}
             />
           );
         })}
@@ -97,6 +122,8 @@ function ScriptCard({
   lines,
   done,
   onToggle,
+  isOpen,
+  onExpand,
 }: {
   badge: string;
   accent: string;
@@ -108,57 +135,75 @@ function ScriptCard({
   lines: string[];
   done?: boolean;
   onToggle?: () => void;
+  isOpen: boolean;
+  onExpand: () => void;
 }) {
   const hasPrinciples = !!principles && principles.length > 0;
   return (
     <div
-      className="cc-panel p-5"
+      className="cc-panel"
       style={{ borderLeft: `3px solid ${done ? "var(--green)" : accent}` }}
     >
-      <div className="flex items-start gap-4">
-        <span
-          className="flex-none w-9 h-9 rounded-full grid place-items-center font-bold text-sm"
-          style={{
-            background: done ? "var(--green-soft)" : "var(--surface)",
-            color: done ? "var(--green)" : accent,
-            border: `1px solid ${done ? "var(--green)" : "var(--border-strong)"}`,
-          }}
-        >
-          {done ? "✓" : badge}
-        </span>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div className="flex items-baseline gap-2 flex-wrap">
-              <h3 className="text-lg font-semibold">{title}</h3>
-              {tagline && (
-                <span
-                  className="text-[11px] font-semibold tracking-[0.06em] uppercase px-2 py-0.5 rounded-full"
-                  style={{ color: accent, background: "rgba(255,255,255,0.04)" }}
-                >
-                  {tagline}
-                </span>
-              )}
-            </div>
-            {onToggle && (
-              <button
-                className={`cc-btn ${done ? "" : "cc-btn--accent"}`}
-                onClick={onToggle}
-                style={
-                  done
-                    ? {
-                        borderColor: "var(--green)",
-                        color: "#b9ecc7",
-                        background: "var(--green-soft)",
-                      }
-                    : undefined
-                }
+      {/* clickable header row */}
+      <div
+        className="flex items-center justify-between gap-3 p-4 cursor-pointer select-none"
+        onClick={onExpand}
+        role="button"
+        aria-expanded={isOpen}
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <span
+            className="flex-none w-9 h-9 rounded-full grid place-items-center font-bold text-sm"
+            style={{
+              background: done ? "var(--green-soft)" : "var(--surface)",
+              color: done ? "var(--green)" : accent,
+              border: `1px solid ${done ? "var(--green)" : "var(--border-strong)"}`,
+            }}
+          >
+            {done ? "✓" : badge}
+          </span>
+          <div className="flex items-baseline gap-2 flex-wrap min-w-0">
+            <h3 className="text-lg font-semibold truncate">{title}</h3>
+            {tagline && (
+              <span
+                className="text-[11px] font-semibold tracking-[0.06em] uppercase px-2 py-0.5 rounded-full"
+                style={{ color: accent, background: "rgba(255,255,255,0.04)" }}
               >
-                {done ? "Done ✓" : "Mark done"}
-              </button>
+                {tagline}
+              </span>
             )}
           </div>
+        </div>
 
-          <p className="text-[var(--fg-dim)] text-[13px] mt-0.5 mb-3">{goal}</p>
+        <div className="flex items-center gap-3 flex-none">
+          {onToggle && (
+            <button
+              className={`cc-btn ${done ? "" : "cc-btn--accent"}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggle();
+              }}
+              style={
+                done
+                  ? {
+                      borderColor: "var(--green)",
+                      color: "#b9ecc7",
+                      background: "var(--green-soft)",
+                    }
+                  : undefined
+              }
+            >
+              {done ? "Done ✓" : "Mark done"}
+            </button>
+          )}
+          <Chevron open={isOpen} />
+        </div>
+      </div>
+
+      {/* expandable content */}
+      {isOpen && (
+        <div className="cc-enter px-4 pb-5 pl-[3.25rem]">
+          <p className="text-[var(--fg-dim)] text-[13px] mb-3">{goal}</p>
 
           {mindset && (
             <p
@@ -205,8 +250,28 @@ function ScriptCard({
             ))}
           </ul>
         </div>
-      </div>
+      )}
     </div>
+  );
+}
+
+function Chevron({ open }: { open: boolean }) {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="var(--fg-dim)"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="flex-none transition-transform"
+      style={{ transform: open ? "rotate(180deg)" : "none" }}
+      aria-hidden
+    >
+      <path d="m6 9 6 6 6-6" />
+    </svg>
   );
 }
 
