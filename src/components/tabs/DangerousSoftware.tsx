@@ -16,7 +16,7 @@ export default function DangerousSoftware() {
         className="rounded-lg p-4 mb-6 flex items-start gap-3"
         style={{
           background: "var(--danger-soft)",
-          border: "1px solid rgba(255,93,93,0.3)",
+          border: "1px solid rgba(250,144,22,0.3)",
         }}
       >
         <span className="text-[var(--danger)] text-lg leading-none mt-0.5">⚠</span>

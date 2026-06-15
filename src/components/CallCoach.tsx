@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   CHIPS,
   COACHING,
@@ -21,16 +28,33 @@ import CallScript from "@/components/tabs/CallScript";
 import RolePlays from "@/components/tabs/RolePlays";
 import DangerousSoftware from "@/components/tabs/DangerousSoftware";
 import { CALL_STATE_KEY, clearPersistedCall } from "@/lib/storage";
+import {
+  Panel,
+  SectionLabel,
+  HeadsetIcon,
+  CalendarIcon,
+  TargetIcon,
+  ScriptIcon,
+  ChatIcon,
+  AlertIcon,
+  ResetIcon,
+} from "@/components/ui";
 
 type TabId = "live" | "book-demo" | "fant" | "script" | "roleplay" | "danger";
 
-const TABS: { id: TabId; label: string; danger?: boolean }[] = [
-  { id: "live", label: "Live coach" },
-  { id: "book-demo", label: "Book demo" },
-  { id: "fant", label: "FANT qualify" },
-  { id: "script", label: "Call script" },
-  { id: "roleplay", label: "Role plays" },
-  { id: "danger", label: "Dangerous software", danger: true },
+const NAV: {
+  id: TabId;
+  label: string;
+  desc: string;
+  icon: ReactNode;
+  danger?: boolean;
+}[] = [
+  { id: "live", label: "Live Coach", desc: "Real-time objection handling and coaching", icon: <HeadsetIcon /> },
+  { id: "book-demo", label: "Book Demo", desc: "Route the prospect to the right BDR", icon: <CalendarIcon /> },
+  { id: "fant", label: "FANT Qualify", desc: "Fit · Authority · Need · Timing scorecard", icon: <TargetIcon /> },
+  { id: "script", label: "Call Script", desc: "The VESTT motion, stage by stage", icon: <ScriptIcon /> },
+  { id: "roleplay", label: "Role Plays", desc: "Drills, post-call analysis, and live practice", icon: <ChatIcon /> },
+  { id: "danger", label: "Dangerous Software", desc: "Competitor watch list by trade", icon: <AlertIcon />, danger: true },
 ];
 
 const ACTIONS: { id: string; label: string }[] = [
@@ -50,7 +74,6 @@ interface TranscriptLine {
 interface GuidanceEntry extends GuidanceBlock {
   key: number;
   accent: "green" | "orange" | "denim" | "purple" | "neutral";
-  /** the chip this card came from; deselecting that chip removes the card */
   sourceChipId?: string;
 }
 
@@ -58,7 +81,7 @@ const ACCENT_BY_CATEGORY: Record<string, GuidanceEntry["accent"]> = {
   competitor: "orange",
   trade: "green",
   role: "denim",
-  tech: "purple",
+  tech: "denim",
   security: "denim",
   objection: "neutral",
 };
@@ -73,29 +96,23 @@ function formatClock(totalSeconds: number): string {
 
 export default function CallCoach() {
   const [tab, setTab] = useState<TabId>("live");
-  // bumped on Reset to force the child tabs (FANT scorecard, role plays) to remount fresh
   const [resetNonce, setResetNonce] = useState(0);
 
-  // call timer — starts at 05:19 like the screenshot, ticks up
   const [seconds, setSeconds] = useState(5 * 60 + 19);
   useEffect(() => {
     const t = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(t);
   }, []);
 
-  // transcript
   const [transcript, setTranscript] = useState<TranscriptLine[]>(() =>
     SEED_TRANSCRIPT.map((text, i) => ({ id: i, speaker: "PROSPECT", text }))
   );
   const nextLineId = useRef(SEED_TRANSCRIPT.length);
 
-  // input
   const [draft, setDraft] = useState("");
 
-  // selections
   const [activeChips, setActiveChips] = useState<Set<string>>(new Set());
   const [fant, setFant] = useState<Record<FantKey, boolean>>({
-    // seed matches the screenshot: A, N, T lit; F not yet
     F: false,
     A: true,
     N: true,
@@ -109,12 +126,11 @@ export default function CallCoach() {
     T2: false,
   });
 
-  // guidance feed (newest first)
   const [guidance, setGuidance] = useState<GuidanceEntry[]>([]);
   const guidanceKey = useRef(0);
   const guidanceRef = useRef<HTMLDivElement>(null);
 
-  // ----- persistence: restore an in-progress call on load, mirror to storage -----
+  // ----- persistence -----
   const hydrated = useRef(false);
   useEffect(() => {
     try {
@@ -166,7 +182,6 @@ export default function CallCoach() {
     }
   }, [transcript, draft, activeChips, fant, vestt, guidance, seconds, tab]);
 
-  // derived context for action scripts
   const lastByCategory = useCallback(
     (cat: string): CoachingCard | undefined => {
       const ids = [...activeChips].reverse();
@@ -221,7 +236,6 @@ export default function CallCoach() {
           ...(card.tip ? [`Tip: ${card.tip}`] : []),
         ],
       };
-      // don't stack a duplicate card for a chip that's already showing one
       setGuidance((g) =>
         sourceChipId && g.some((e) => e.sourceChipId === sourceChipId)
           ? g
@@ -234,15 +248,11 @@ export default function CallCoach() {
 
   const pushBlock = useCallback(
     (block: GuidanceBlock, accent: GuidanceEntry["accent"] = "green") => {
-      setGuidance((g) => [
-        { key: guidanceKey.current++, accent, ...block },
-        ...g,
-      ]);
+      setGuidance((g) => [{ key: guidanceKey.current++, accent, ...block }, ...g]);
     },
     []
   );
 
-  // ----- handlers -----
   const handleChip = useCallback(
     (chip: Chip) => {
       const isActive = activeChips.has(chip.id);
@@ -253,7 +263,6 @@ export default function CallCoach() {
         return next;
       });
       if (isActive) {
-        // deselecting → clear this chip's coaching card from the window
         setGuidance((g) => g.filter((e) => e.sourceChipId !== chip.id));
       } else {
         const card = COACHING[chip.id];
@@ -274,7 +283,6 @@ export default function CallCoach() {
     setTranscript((t) => [...t, line]);
     const card = matchUtterance(text);
     if (card) {
-      // reflect the detected topic in the chip rail too
       setActiveChips((prev) => new Set(prev).add(card.id));
       pushCard(card, card.id);
     } else {
@@ -295,7 +303,6 @@ export default function CallCoach() {
 
   const handleAction = useCallback(
     (actionId: string) => {
-      setTab("live"); // guidance renders on the live tab
       const block = buildAction(actionId, ctx);
       const accent: GuidanceEntry["accent"] =
         actionId === "battlecard"
@@ -304,7 +311,6 @@ export default function CallCoach() {
           ? "denim"
           : "green";
       pushBlock(block, accent);
-      // a couple of actions advance the VESTT trial-close
       if (actionId === "book-demo" || actionId === "demo-close") {
         setVestt((v) => ({ ...v, T2: true }));
       }
@@ -331,10 +337,8 @@ export default function CallCoach() {
     setResetNonce((n) => n + 1);
   }, []);
 
-  const toggleFant = (k: FantKey) =>
-    setFant((f) => ({ ...f, [k]: !f[k] }));
-  const toggleVestt = (k: VesttKey) =>
-    setVestt((v) => ({ ...v, [k]: !v[k] }));
+  const toggleFant = (k: FantKey) => setFant((f) => ({ ...f, [k]: !f[k] }));
+  const toggleVestt = (k: VesttKey) => setVestt((v) => ({ ...v, [k]: !v[k] }));
   const setFantValue = useCallback(
     (k: FantKey, v: boolean) => setFant((f) => ({ ...f, [k]: v })),
     []
@@ -344,103 +348,105 @@ export default function CallCoach() {
     []
   );
 
-  return (
-    <div className="min-h-screen w-full bg-[var(--bg)] p-4 sm:p-6 flex items-start justify-center">
-      <div className="w-full max-w-[1480px] rounded-2xl bg-[var(--app)] border border-[var(--border)] shadow-2xl overflow-hidden">
-        {/* ---------- header ---------- */}
-        <header className="flex items-center justify-between px-7 pt-6 pb-3">
-          <div className="flex items-baseline gap-3">
-            <span
-              className="inline-block w-3 h-3 rounded-full bg-[var(--green)] translate-y-[1px]"
-              style={{ boxShadow: "0 0 10px var(--green)" }}
-              aria-hidden
-            />
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Togal Call Coach
-            </h1>
-            <span className="text-[var(--fg-dim)] text-base">v7.1</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-[var(--fg-muted)] text-lg tabular-nums font-mono">
-              {formatClock(seconds)}
-            </span>
-            <span className="px-4 py-1 rounded-full border border-[var(--danger)] text-[var(--danger)] text-sm font-semibold">
-              Live
-            </span>
-          </div>
-        </header>
+  const active = NAV.find((n) => n.id === tab) ?? NAV[0];
 
-        {/* ---------- tabs ---------- */}
-        <nav className="flex items-center gap-8 px-7 border-b border-[var(--border)] pb-3">
-          {TABS.map((t) => (
+  return (
+    <div className="cc-app">
+      {/* ---------- sidebar ---------- */}
+      <aside className="cc-sidebar">
+        <div className="cc-brand">
+          <span className="cc-brand-dot" aria-hidden />
+          <div className="leading-tight">
+            <div className="text-[16px] font-bold tracking-tight">
+              Togal<span style={{ color: "var(--green)" }}>.AI</span>
+            </div>
+            <div className="text-[11px] text-[var(--fg-dim)] font-medium">
+              Call Coach · v7.1
+            </div>
+          </div>
+        </div>
+
+        <nav className="flex flex-col gap-1 cc-stagger">
+          {NAV.map((n) => (
             <button
-              key={t.id}
-              className={`cc-tab ${t.id === tab ? "is-active" : ""} ${
-                t.danger ? "cc-tab--danger" : ""
+              key={n.id}
+              className={`cc-nav ${n.danger ? "cc-nav--danger" : ""} ${
+                tab === n.id ? "is-active" : ""
               }`}
-              onClick={() => setTab(t.id)}
+              onClick={() => setTab(n.id)}
             >
-              {t.label}
+              {n.icon}
+              <span>{n.label}</span>
             </button>
           ))}
         </nav>
 
-        {tab === "live" && (
-          <LiveCoach
-            transcript={transcript}
-            draft={draft}
-            setDraft={setDraft}
-            activeChips={activeChips}
-            onChip={handleChip}
-            onAnalyze={handleAnalyze}
-            guidance={guidance}
-            guidanceRef={guidanceRef}
-            fant={fant}
-            vestt={vestt}
-            toggleFant={toggleFant}
-            toggleVestt={toggleVestt}
-          />
-        )}
-        {tab === "book-demo" && <BookDemo />}
-        {tab === "fant" && (
-          <FantQualify
-            key={resetNonce}
-            fant={fant}
-            setFantValue={setFantValue}
-          />
-        )}
-        {tab === "script" && (
-          <CallScript vestt={vestt} setVesttValue={setVesttValue} />
-        )}
-        {tab === "roleplay" && <RolePlays key={resetNonce} />}
-        {tab === "danger" && <DangerousSoftware />}
-
-        {/* ---------- action bar ---------- */}
-        <div className="px-7 pt-5 pb-7 border-t border-[var(--border)] space-y-4">
-          <div className="flex gap-4 flex-wrap">
-            {ACTIONS.map((a) => (
-              <button
-                key={a.id}
-                className="action-btn"
-                onClick={() => handleAction(a.id)}
-              >
-                {a.label} <span className="text-[var(--fg-dim)]">↗</span>
-              </button>
-            ))}
-          </div>
-          <div>
-            <button className="action-btn action-btn--reset" onClick={handleReset}>
-              Reset
-            </button>
-          </div>
+        <div className="mt-auto pt-4 space-y-3">
+          <p className="px-2 text-[12px] leading-snug text-[var(--fg-dim)]">
+            <span className="text-[var(--fg-muted)] font-medium">
+              Takeoff in Minutes.
+            </span>{" "}
+            Not Days.
+          </p>
+          <button className="cc-reset" onClick={handleReset}>
+            <ResetIcon size={15} /> Reset session
+          </button>
         </div>
-      </div>
+      </aside>
+
+      {/* ---------- main ---------- */}
+      <main className="cc-main">
+        <header className="cc-topbar">
+          <div>
+            <h1 className="text-xl font-semibold leading-tight">{active.label}</h1>
+            <p className="text-[13px] text-[var(--fg-muted)]">{active.desc}</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="cc-clock">{formatClock(seconds)}</span>
+            <span className="cc-livepill">
+              <span className="dot" /> Live
+            </span>
+          </div>
+        </header>
+
+        <div className="cc-content">
+          {tab === "live" ? (
+            <LiveCoach
+              transcript={transcript}
+              draft={draft}
+              setDraft={setDraft}
+              activeChips={activeChips}
+              onChip={handleChip}
+              onAnalyze={handleAnalyze}
+              onAction={handleAction}
+              guidance={guidance}
+              guidanceRef={guidanceRef}
+              fant={fant}
+              vestt={vestt}
+              toggleFant={toggleFant}
+              toggleVestt={toggleVestt}
+            />
+          ) : (
+            <div className="cc-scroll h-full overflow-y-auto cc-enter">
+              {tab === "book-demo" && <BookDemo />}
+              {tab === "fant" && (
+                <FantQualify key={resetNonce} fant={fant} setFantValue={setFantValue} />
+              )}
+              {tab === "script" && (
+                <CallScript vestt={vestt} setVesttValue={setVesttValue} />
+              )}
+              {tab === "roleplay" && <RolePlays key={resetNonce} />}
+              {tab === "danger" && <DangerousSoftware />}
+            </div>
+          )}
+        </div>
+      </main>
     </div>
   );
 }
 
 /* ================================================================== */
-/*  Live coach tab                                                     */
+/*  Live coach — full-height two-column                                */
 /* ================================================================== */
 
 function LiveCoach({
@@ -450,6 +456,7 @@ function LiveCoach({
   activeChips,
   onChip,
   onAnalyze,
+  onAction,
   guidance,
   guidanceRef,
   fant,
@@ -463,6 +470,7 @@ function LiveCoach({
   activeChips: Set<string>;
   onChip: (c: Chip) => void;
   onAnalyze: () => void;
+  onAction: (id: string) => void;
   guidance: GuidanceEntry[];
   guidanceRef: React.RefObject<HTMLDivElement | null>;
   fant: Record<FantKey, boolean>;
@@ -479,119 +487,139 @@ function LiveCoach({
   }, [transcript]);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-7 px-7 py-6">
-      {/* ---------- left: live input ---------- */}
-      <section className="flex flex-col min-h-0">
-        <h2 className="text-sm font-semibold tracking-[0.12em] text-[var(--fg-muted)] mb-4">
-          LIVE INPUT
-        </h2>
+    <div className="h-full px-7 py-6">
+      <div className="h-full min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* ---- left: live input ---- */}
+        <section className="flex flex-col min-h-0">
+          <div className="flex items-baseline justify-between mb-2.5">
+            <SectionLabel className="mb-0">Live input</SectionLabel>
+            <span className="text-[12px] text-[var(--fg-dim)]">
+              Prospect transcript
+            </span>
+          </div>
 
-        <div
-          ref={transcriptRef}
-          className="cc-scroll h-[330px] overflow-y-auto pr-3 space-y-3"
-        >
-          {transcript.map((line) => (
-            <div
-              key={line.id}
-              className="rounded-lg bg-[var(--panel)] border-l-2 border-[var(--border-strong)] px-5 py-4"
-            >
-              <div className="text-xs font-semibold tracking-[0.12em] text-[var(--fg-dim)] mb-2">
-                {line.speaker}
+          <div
+            ref={transcriptRef}
+            className="cc-panel cc-scroll flex-1 min-h-0 overflow-y-auto p-4 space-y-3"
+          >
+            {transcript.map((line) => (
+              <div
+                key={line.id}
+                className="rounded-lg bg-[var(--surface)] border-l-2 border-[var(--border-strong)] px-4 py-3"
+              >
+                <div className="text-[10px] font-semibold tracking-[0.14em] text-[var(--fg-dim)] mb-1.5">
+                  {line.speaker}
+                </div>
+                <div className="text-[var(--fg)] text-[16px] leading-snug">
+                  {line.text}
+                </div>
               </div>
-              <div className="text-[var(--fg)] text-lg leading-snug">
-                {line.text}
-              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 flex-none">
+            <SectionLabel>Tag what you hear</SectionLabel>
+            <div className="flex flex-wrap gap-2">
+              {CHIPS.map((chip) => (
+                <button
+                  key={chip.id}
+                  className={`chip ${activeChips.has(chip.id) ? "is-active" : ""}`}
+                  data-variant={chip.category}
+                  onClick={() => onChip(chip)}
+                >
+                  {chip.label}
+                </button>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
 
-        {/* chip rail */}
-        <div className="flex flex-wrap gap-3 mt-5">
-          {CHIPS.map((chip) => (
-            <button
-              key={chip.id}
-              className={`chip ${activeChips.has(chip.id) ? "is-active" : ""}`}
-              data-variant={chip.category}
-              onClick={() => onChip(chip)}
-            >
-              {chip.label}
+          <div className="mt-4 flex gap-3 flex-none">
+            <input
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") onAnalyze();
+              }}
+              placeholder="Type the prospect's objection or topic…"
+              className="cc-field flex-1 text-[16px]"
+            />
+            <button className="btn-analyze" onClick={onAnalyze}>
+              Analyze <span className="opacity-60">↗</span>
             </button>
-          ))}
-        </div>
+          </div>
+        </section>
 
-        {/* input row */}
-        <div className="flex gap-4 mt-6">
-          <input
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") onAnalyze();
-            }}
-            placeholder="Type prospect's objection or topic…"
-            className="cc-scroll flex-1 rounded-lg bg-[var(--surface)] border border-[var(--border-strong)] px-5 py-4 text-xl text-[var(--fg)] placeholder:text-[var(--fg-dim)] outline-none focus:border-[var(--green)] transition-colors"
-          />
-          <button className="btn-analyze" onClick={onAnalyze}>
-            Analyze <span className="text-[var(--fg-dim)]">↗</span>
-          </button>
-        </div>
-      </section>
+        {/* ---- right: coaching guidance ---- */}
+        <section className="flex flex-col min-h-0">
+          <div className="flex items-baseline justify-between mb-2.5">
+            <SectionLabel className="mb-0">Coaching guidance</SectionLabel>
+            <span className="text-[12px] text-[var(--fg-dim)]">
+              {guidance.length} {guidance.length === 1 ? "card" : "cards"}
+            </span>
+          </div>
 
-      {/* ---------- right: coaching guidance ---------- */}
-      <section className="flex flex-col min-h-0">
-        <h2 className="text-sm font-semibold tracking-[0.12em] text-[var(--fg-muted)] mb-4">
-          COACHING GUIDANCE
-        </h2>
+          <div className="flex gap-2 overflow-x-auto cc-scroll pb-2 mb-3 flex-none">
+            {ACTIONS.map((a) => (
+              <button
+                key={a.id}
+                className="action-btn"
+                onClick={() => onAction(a.id)}
+              >
+                {a.label} <span className="opacity-50">↗</span>
+              </button>
+            ))}
+          </div>
 
-        <div
-          ref={guidanceRef}
-          className="cc-scroll h-[430px] overflow-y-auto pr-3 rounded-lg bg-[var(--panel)] border border-[var(--border)] p-4 space-y-3"
-        >
-          {guidance.length === 0 ? (
-            <div className="h-full flex items-center justify-center text-center px-6">
-              <p className="text-[var(--fg-dim)] text-base max-w-sm leading-relaxed">
-                Tap a chip or analyze what the prospect said. Live talk tracks,
-                battlecards, and next steps appear here.
-              </p>
+          <div
+            ref={guidanceRef}
+            className="cc-panel cc-scroll flex-1 min-h-0 overflow-y-auto p-4 space-y-3"
+          >
+            {guidance.length === 0 ? (
+              <div className="h-full flex items-center justify-center text-center px-8">
+                <p className="text-[var(--fg-dim)] text-[15px] max-w-sm leading-relaxed">
+                  Tap a chip or analyze what the prospect said. Live talk tracks,
+                  battlecards, and next steps land here — newest first.
+                </p>
+              </div>
+            ) : (
+              guidance.map((g) => <GuidanceCard key={g.key} entry={g} />)
+            )}
+          </div>
+
+          <Panel className="mt-4 p-4 flex-none">
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="w-12 text-[11px] font-semibold tracking-[0.11em] text-[var(--fg-muted)]">
+                FANT
+              </span>
+              {FANT.map((f) => (
+                <button
+                  key={f.key}
+                  className={`tag tag--fant ${fant[f.key] ? "is-on" : ""}`}
+                  title={f.hint}
+                  onClick={() => toggleFant(f.key)}
+                >
+                  {f.label}
+                </button>
+              ))}
             </div>
-          ) : (
-            guidance.map((g) => <GuidanceCard key={g.key} entry={g} />)
-          )}
-        </div>
-
-        {/* framework trackers */}
-        <div className="mt-5 space-y-4">
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="w-16 text-sm font-semibold tracking-[0.12em] text-[var(--fg-muted)]">
-              FANT
-            </span>
-            {FANT.map((f) => (
-              <button
-                key={f.key}
-                className={`tag tag--fant ${fant[f.key] ? "is-on" : ""}`}
-                title={f.hint}
-                onClick={() => toggleFant(f.key)}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="w-16 text-sm font-semibold tracking-[0.12em] text-[var(--fg-muted)]">
-              VESTT
-            </span>
-            {VESTT.map((v) => (
-              <button
-                key={v.key}
-                className={`tag tag--vestt ${vestt[v.key] ? "is-on" : ""}`}
-                title={`${v.full} — ${v.hint}`}
-                onClick={() => toggleVestt(v.key)}
-              >
-                {v.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
+            <div className="flex items-center gap-3 flex-wrap mt-3">
+              <span className="w-12 text-[11px] font-semibold tracking-[0.11em] text-[var(--fg-muted)]">
+                VESTT
+              </span>
+              {VESTT.map((v) => (
+                <button
+                  key={v.key}
+                  className={`tag tag--vestt ${vestt[v.key] ? "is-on" : ""}`}
+                  title={`${v.full} — ${v.hint}`}
+                  onClick={() => toggleVestt(v.key)}
+                >
+                  {v.label}
+                </button>
+              ))}
+            </div>
+          </Panel>
+        </section>
+      </div>
     </div>
   );
 }
@@ -626,10 +654,7 @@ function GuidanceCard({ entry }: { entry: GuidanceEntry }) {
       </h3>
       <div className="space-y-2">
         {entry.body.map((b, i) => (
-          <p
-            key={i}
-            className="text-[var(--fg-muted)] text-[15px] leading-relaxed"
-          >
+          <p key={i} className="text-[var(--fg-muted)] text-[15px] leading-relaxed">
             {b}
           </p>
         ))}
