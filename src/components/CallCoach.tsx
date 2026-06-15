@@ -608,7 +608,7 @@ function LiveCoach({
 
             <div
               ref={guidanceRef}
-              className="cc-panel cc-scroll flex-1 min-h-0 overflow-y-auto p-4 space-y-3"
+              className="cc-panel cc-scroll flex-1 min-h-0 overflow-y-auto p-4"
             >
               {guidance.length === 0 ? (
                 <div className="h-full flex items-center justify-center text-center px-8">
@@ -619,7 +619,11 @@ function LiveCoach({
                   </p>
                 </div>
               ) : (
-                guidance.map((g) => <GuidanceCard key={g.key} entry={g} />)
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 items-start">
+                  {guidance.map((g, i) => (
+                    <GuidanceCard key={g.key} entry={g} isNew={i === 0} />
+                  ))}
+                </div>
               )}
             </div>
           </>
@@ -737,34 +741,46 @@ const ACCENT_HEX: Record<GuidanceEntry["accent"], string> = {
 
 function GuidanceCard({
   entry,
+  isNew,
   notesFields,
 }: {
   entry: GuidanceEntry;
+  isNew?: boolean;
   notesFields?: { label: string; value: string }[];
 }) {
+  const accent = ACCENT_HEX[entry.accent];
+  // signal + tip are coaching meta, not the words to say — fold into one dim line
+  const meta = [entry.signal, entry.tip].filter(Boolean).join(" · ");
   return (
     <div
-      className="cc-enter rounded-lg bg-[var(--surface)] border border-[var(--border)] px-5 py-4"
-      style={{ borderLeft: `3px solid ${ACCENT_HEX[entry.accent]}` }}
+      className="cc-enter rounded-lg bg-[var(--surface)] border border-[var(--border)] px-4 py-3"
+      style={{ borderLeft: `3px solid ${accent}` }}
     >
-      <div className="flex items-center justify-between mb-2">
+      {/* header: New badge + tag + heading on one row */}
+      <div className="flex items-center gap-2 flex-wrap mb-2">
+        {isNew && (
+          <span
+            className="text-[9px] font-semibold tracking-[0.08em] uppercase px-1.5 py-0.5 rounded-full"
+            style={{ color: "var(--bg)", background: "var(--green)" }}
+          >
+            New
+          </span>
+        )}
         <span
-          className="text-[11px] font-semibold tracking-[0.1em] uppercase px-2.5 py-1 rounded-full"
-          style={{
-            color: ACCENT_HEX[entry.accent],
-            background: "rgba(255,255,255,0.04)",
-          }}
+          className="text-[10px] font-semibold tracking-[0.09em] uppercase px-2 py-0.5 rounded-full"
+          style={{ color: accent, background: "rgba(255,255,255,0.05)" }}
         >
           {entry.tag}
         </span>
+        <h3 className="text-[var(--fg)] text-[15px] font-semibold leading-tight">
+          {entry.heading}
+        </h3>
       </div>
-      <h3 className="text-[var(--fg)] text-lg font-semibold mb-2">
-        {entry.heading}
-      </h3>
+
       {notesFields && (
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 mb-2">
           {notesFields.map((f, i) => (
-            <div key={i} className="flex gap-2 text-[14px] leading-relaxed">
+            <div key={i} className="flex gap-2 text-[13px] leading-relaxed">
               <span className="text-[var(--fg-dim)] font-medium min-w-[124px] flex-none">
                 {f.label}
               </span>
@@ -773,44 +789,30 @@ function GuidanceCard({
           ))}
         </div>
       )}
-      <div className="space-y-2.5">
-        {entry.signal && (
-          <p className="text-[var(--fg-muted)] text-[14px] leading-relaxed">
-            <span className="text-[var(--fg-dim)] font-medium">Signal: </span>
-            {entry.signal}
-          </p>
-        )}
-        {entry.reply && (
-          <div
-            className="rounded-md px-3 py-2.5"
-            style={{
-              background: "rgba(255,255,255,0.04)",
-              borderLeft: `2px solid ${ACCENT_HEX[entry.accent]}`,
-            }}
-          >
-            <div
-              className="text-[10px] font-semibold tracking-[0.12em] uppercase mb-1"
-              style={{ color: ACCENT_HEX[entry.accent] }}
-            >
-              Say this
-            </div>
-            <p className="text-[var(--fg)] text-[15px] font-semibold leading-relaxed">
-              {entry.reply}
+
+      {/* the reply — the hero, kept bold, just stripped of chrome */}
+      {entry.reply && (
+        <p
+          className="text-[var(--fg)] text-[14px] font-semibold leading-snug pl-3"
+          style={{ borderLeft: `2px solid ${accent}` }}
+        >
+          {entry.reply}
+        </p>
+      )}
+
+      {entry.body.length > 0 && (
+        <div className="space-y-1.5">
+          {entry.body.map((b, i) => (
+            <p key={i} className="text-[var(--fg-muted)] text-[13px] leading-relaxed">
+              {b}
             </p>
-          </div>
-        )}
-        {entry.tip && (
-          <p className="text-[var(--fg-muted)] text-[14px] leading-relaxed">
-            <span className="text-[var(--fg-dim)] font-medium">Tip: </span>
-            {entry.tip}
-          </p>
-        )}
-        {entry.body.map((b, i) => (
-          <p key={i} className="text-[var(--fg-muted)] text-[15px] leading-relaxed">
-            {b}
-          </p>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
+
+      {meta && (
+        <p className="text-[11px] text-[var(--fg-dim)] leading-snug mt-2">{meta}</p>
+      )}
     </div>
   );
 }
