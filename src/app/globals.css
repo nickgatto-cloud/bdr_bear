@@ -465,6 +465,12 @@ body {
   border-color: var(--green);
   color: #c4eecf;
 }
+.action-btn.is-active {
+  background: var(--green-soft);
+  border-color: var(--green);
+  color: #c4eecf;
+  box-shadow: 0 0 0 1px var(--green), 0 0 14px -4px var(--green);
+}
 .action-btn--reset {
   flex: 0 0 auto;
 }

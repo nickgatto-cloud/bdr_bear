@@ -75,6 +75,12 @@ interface GuidanceEntry extends GuidanceBlock {
   key: number;
   accent: "green" | "orange" | "denim" | "purple" | "neutral";
   sourceChipId?: string;
+  /** the toolbar action this card came from; re-clicking that action removes it */
+  sourceActionId?: string;
+  /** chip cards split out context vs. the recommended reply (emphasised) */
+  signal?: string;
+  reply?: string;
+  tip?: string;
 }
 
 const ACCENT_BY_CATEGORY: Record<string, GuidanceEntry["accent"]> = {
@@ -112,6 +118,7 @@ export default function CallCoach() {
   const [draft, setDraft] = useState("");
 
   const [activeChips, setActiveChips] = useState<Set<string>>(new Set());
+  const [activeActions, setActiveActions] = useState<Set<string>>(new Set());
   const [fant, setFant] = useState<Record<FantKey, boolean>>({
     F: false,
     A: true,
@@ -144,6 +151,8 @@ export default function CallCoach() {
         }
         if (typeof s.draft === "string") setDraft(s.draft);
         if (Array.isArray(s.activeChips)) setActiveChips(new Set(s.activeChips));
+        if (Array.isArray(s.activeActions))
+          setActiveActions(new Set(s.activeActions));
         if (s.fant) setFant(s.fant);
         if (s.vestt) setVestt(s.vestt);
         if (Array.isArray(s.guidance)) {
@@ -170,6 +179,7 @@ export default function CallCoach() {
           transcript,
           draft,
           activeChips: [...activeChips],
+          activeActions: [...activeActions],
           fant,
           vestt,
           guidance,
@@ -180,7 +190,17 @@ export default function CallCoach() {
     } catch {
       /* ignore */
     }
-  }, [transcript, draft, activeChips, fant, vestt, guidance, seconds, tab]);
+  }, [
+    transcript,
+    draft,
+    activeChips,
+    activeActions,
+    fant,
+    vestt,
+    guidance,
+    seconds,
+    tab,
+  ]);
 
   const lastByCategory = useCallback(
     (cat: string): CoachingCard | undefined => {
@@ -230,11 +250,10 @@ export default function CallCoach() {
         tag: card.tag,
         heading: card.heading,
         accent: ACCENT_BY_CATEGORY[card.category] ?? "neutral",
-        body: [
-          `Signal: ${card.signal}`,
-          card.talkTrack,
-          ...(card.tip ? [`Tip: ${card.tip}`] : []),
-        ],
+        signal: card.signal,
+        reply: card.talkTrack,
+        tip: card.tip,
+        body: [],
       };
       setGuidance((g) =>
         sourceChipId && g.some((e) => e.sourceChipId === sourceChipId)
@@ -303,6 +322,18 @@ export default function CallCoach() {
 
   const handleAction = useCallback(
     (actionId: string) => {
+      const isActive = activeActions.has(actionId);
+      setActiveActions((prev) => {
+        const next = new Set(prev);
+        if (next.has(actionId)) next.delete(actionId);
+        else next.add(actionId);
+        return next;
+      });
+      if (isActive) {
+        // deselecting → clear this action's card from the window
+        setGuidance((g) => g.filter((e) => e.sourceActionId !== actionId));
+        return;
+      }
       const block = buildAction(actionId, ctx);
       const accent: GuidanceEntry["accent"] =
         actionId === "battlecard"
@@ -310,12 +341,15 @@ export default function CallCoach() {
           : actionId === "follow-up"
           ? "denim"
           : "green";
-      pushBlock(block, accent);
+      setGuidance((g) => [
+        { key: guidanceKey.current++, accent, sourceActionId: actionId, ...block },
+        ...g,
+      ]);
       if (actionId === "book-demo" || actionId === "demo-close") {
         setVestt((v) => ({ ...v, T2: true }));
       }
     },
-    [ctx, pushBlock]
+    [activeActions, ctx]
   );
 
   const handleReset = useCallback(() => {
@@ -328,6 +362,7 @@ export default function CallCoach() {
     );
     nextLineId.current = SEED_TRANSCRIPT.length;
     setActiveChips(new Set());
+    setActiveActions(new Set());
     setFant({ F: false, A: true, N: true, T: true });
     setVestt({ V: false, E: false, S: false, T1: false, T2: false });
     setGuidance([]);
@@ -419,6 +454,7 @@ export default function CallCoach() {
               onChip={handleChip}
               onAnalyze={handleAnalyze}
               onAction={handleAction}
+              activeActions={activeActions}
               guidance={guidance}
               guidanceRef={guidanceRef}
               fant={fant}
@@ -457,6 +493,7 @@ function LiveCoach({
   onChip,
   onAnalyze,
   onAction,
+  activeActions,
   guidance,
   guidanceRef,
   fant,
@@ -471,6 +508,7 @@ function LiveCoach({
   onChip: (c: Chip) => void;
   onAnalyze: () => void;
   onAction: (id: string) => void;
+  activeActions: Set<string>;
   guidance: GuidanceEntry[];
   guidanceRef: React.RefObject<HTMLDivElement | null>;
   fant: Record<FantKey, boolean>;
@@ -562,7 +600,7 @@ function LiveCoach({
             {ACTIONS.map((a) => (
               <button
                 key={a.id}
-                className="action-btn"
+                className={`action-btn ${activeActions.has(a.id) ? "is-active" : ""}`}
                 onClick={() => onAction(a.id)}
               >
                 {a.label} <span className="opacity-50">↗</span>
@@ -652,7 +690,38 @@ function GuidanceCard({ entry }: { entry: GuidanceEntry }) {
       <h3 className="text-[var(--fg)] text-lg font-semibold mb-2">
         {entry.heading}
       </h3>
-      <div className="space-y-2">
+      <div className="space-y-2.5">
+        {entry.signal && (
+          <p className="text-[var(--fg-muted)] text-[14px] leading-relaxed">
+            <span className="text-[var(--fg-dim)] font-medium">Signal: </span>
+            {entry.signal}
+          </p>
+        )}
+        {entry.reply && (
+          <div
+            className="rounded-md px-3 py-2.5"
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              borderLeft: `2px solid ${ACCENT_HEX[entry.accent]}`,
+            }}
+          >
+            <div
+              className="text-[10px] font-semibold tracking-[0.12em] uppercase mb-1"
+              style={{ color: ACCENT_HEX[entry.accent] }}
+            >
+              Say this
+            </div>
+            <p className="text-[var(--fg)] text-[15px] font-semibold leading-relaxed">
+              {entry.reply}
+            </p>
+          </div>
+        )}
+        {entry.tip && (
+          <p className="text-[var(--fg-muted)] text-[14px] leading-relaxed">
+            <span className="text-[var(--fg-dim)] font-medium">Tip: </span>
+            {entry.tip}
+          </p>
+        )}
         {entry.body.map((b, i) => (
           <p key={i} className="text-[var(--fg-muted)] text-[15px] leading-relaxed">
             {b}
