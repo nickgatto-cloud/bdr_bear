@@ -83,7 +83,7 @@ export const CHIPS: Chip[] = [
   { id: "it-security", label: "IT / Security", category: "security" },
 
   { id: "drywall", label: "Drywall/Framing", category: "trade" },
-  { id: "retaining", label: "Retaining walls", category: "trade" },
+  { id: "flooring", label: "Flooring", category: "trade" },
   { id: "concrete", label: "Concrete", category: "trade" },
   { id: "electrical", label: "Electrical", category: "trade" },
   { id: "gc", label: "General Contractor", category: "trade" },
@@ -343,18 +343,18 @@ export const COACHING: Record<string, CoachingCard> = {
     vestt: ["S", "T1"],
     keywords: ["drywall", "framing", "dry wall", "studs", "partition"],
   },
-  retaining: {
-    id: "retaining",
+  flooring: {
+    id: "flooring",
     tag: "Trade fit",
     category: "trade",
-    heading: "Retaining walls",
-    signal: "Linear runs plus heights/segments drive their quantities.",
+    heading: "Flooring",
+    signal: "Area-driven: square footage per room and per floor type prices the job.",
     talkTrack:
-      "Show linear takeoff: Togal traces wall runs and segment lengths automatically, and you tier by height. Their estimators usually do this by hand off site plans — auto-detection is an obvious time win here.",
-    tip: "Demo linear runs + segment lengths on a site plan.",
+      "Flooring is pure area takeoff — Togal auto-detects every room boundary and gives you square footage in seconds, broken out by room so you can price carpet, LVT, tile, and hardwood separately. That replaces tracing rooms by hand, and the closets and transitions that usually get missed get counted.",
+    tip: "Demo room-by-room area auto-detection on a floor plan.",
     fant: ["F", "N"],
     vestt: ["S", "T1"],
-    keywords: ["retaining", "retaining wall", "site wall"],
+    keywords: ["flooring", "floor", "carpet", "tile", "vinyl", "lvt", "hardwood", "square footage"],
   },
   concrete: {
     id: "concrete",
@@ -931,7 +931,7 @@ export const SCENARIO_PROSPECT_TYPES = [
   "Estimator — concrete",
   "Estimator — electrical",
   "PM/Precon — general contractor",
-  "Owner — retaining walls",
+  "Owner — flooring",
 ];
 
 export interface ScenarioObjection {
