@@ -11,7 +11,11 @@ const SUBTABS: { id: SubTab; label: string; icon: ReactNode }[] = [
   { id: "scenario", label: "Practice scenario", icon: <RepeatIcon /> },
 ];
 
-export default function RolePlays() {
+export default function RolePlays({
+  liveTranscript = "",
+}: {
+  liveTranscript?: string;
+}) {
   const [sub, setSub] = useState<SubTab>("angles");
 
   return (
@@ -31,7 +35,7 @@ export default function RolePlays() {
       </div>
 
       {sub === "angles" && <RoleAngles />}
-      {sub === "post-call" && <PostCallAnalysis />}
+      {sub === "post-call" && <PostCallAnalysis liveTranscript={liveTranscript} />}
       {sub === "scenario" && <PracticeScenario />}
     </div>
   );

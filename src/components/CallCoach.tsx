@@ -11,11 +11,8 @@ import {
 import {
   CHIPS,
   COACHING,
-  FANT,
-  VESTT,
-  SEED_TRANSCRIPT,
-  matchUtterance,
   buildAction,
+  matchUtterance,
   type Chip,
   type CoachingCard,
   type FantKey,
@@ -29,7 +26,6 @@ import RolePlays from "@/components/tabs/RolePlays";
 import DangerousSoftware from "@/components/tabs/DangerousSoftware";
 import { CALL_STATE_KEY, clearPersistedCall } from "@/lib/storage";
 import {
-  Panel,
   SectionLabel,
   HeadsetIcon,
   CalendarIcon,
@@ -151,15 +147,12 @@ export default function CallCoach() {
     return () => clearInterval(t);
   }, []);
 
-  const [transcript, setTranscript] = useState<TranscriptLine[]>(() =>
-    SEED_TRANSCRIPT.map((text, i) => ({ id: i, speaker: "PROSPECT", text }))
-  );
-  const nextLineId = useRef(SEED_TRANSCRIPT.length);
-
-  const [draft, setDraft] = useState("");
-
   const [activeChips, setActiveChips] = useState<Set<string>>(new Set());
   const [activeActions, setActiveActions] = useState<Set<string>>(new Set());
+  // captured prospect lines — not shown live; surfaced in Post-call analysis
+  const [transcript, setTranscript] = useState<TranscriptLine[]>([]);
+  const nextLineId = useRef(0);
+  const [draft, setDraft] = useState("");
   // editable notes fields (the rest of the notes auto-fill from chips)
   const [estimatingTeam, setEstimatingTeam] = useState("");
   const [estimators, setEstimators] = useState("");
@@ -188,10 +181,11 @@ export default function CallCoach() {
       const raw = window.localStorage.getItem(CALL_STATE_KEY);
       if (raw) {
         const s = JSON.parse(raw);
-        if (Array.isArray(s.transcript) && s.transcript.length) {
+        if (Array.isArray(s.transcript)) {
           setTranscript(s.transcript);
-          nextLineId.current =
-            Math.max(...s.transcript.map((l: TranscriptLine) => l.id)) + 1;
+          nextLineId.current = s.transcript.length
+            ? Math.max(...s.transcript.map((l: TranscriptLine) => l.id)) + 1
+            : 0;
         }
         if (typeof s.draft === "string") setDraft(s.draft);
         if (Array.isArray(s.activeChips)) setActiveChips(new Set(s.activeChips));
@@ -347,15 +341,14 @@ export default function CallCoach() {
     [activeChips, pushCard]
   );
 
+  // type what you heard → log to transcript + auto-tag the matching chip
   const handleAnalyze = useCallback(() => {
     const text = draft.trim();
     if (!text) return;
-    const line: TranscriptLine = {
-      id: nextLineId.current++,
-      speaker: "PROSPECT",
-      text,
-    };
-    setTranscript((t) => [...t, line]);
+    setTranscript((t) => [
+      ...t,
+      { id: nextLineId.current++, speaker: "PROSPECT", text },
+    ]);
     const card = matchUtterance(text);
     if (card) {
       setActiveChips((prev) => new Set(prev).add(card.id));
@@ -366,8 +359,8 @@ export default function CallCoach() {
           tag: "Listen",
           heading: "No objection pattern detected",
           body: [
-            `Logged: "${text}"`,
-            `Keep them talking — ask an open question to surface the real driver, then tap the closest chip for a battlecard or rebuttal.`,
+            `Logged to transcript: "${text}"`,
+            `Keep them talking — ask an open question to surface the real driver, then tap the closest chip for a battlecard.`,
           ],
         },
         "neutral"
@@ -409,14 +402,9 @@ export default function CallCoach() {
   );
 
   const handleReset = useCallback(() => {
-    setTranscript(
-      SEED_TRANSCRIPT.map((text, i) => ({
-        id: i,
-        speaker: "PROSPECT" as const,
-        text,
-      }))
-    );
-    nextLineId.current = SEED_TRANSCRIPT.length;
+    setTranscript([]);
+    nextLineId.current = 0;
+    setDraft("");
     setActiveChips(new Set());
     setActiveActions(new Set());
     setEstimatingTeam("");
@@ -424,14 +412,11 @@ export default function CallCoach() {
     setFant({ F: false, A: true, N: true, T: true });
     setVestt({ V: false, E: false, S: false, T1: false, T2: false });
     setGuidance([]);
-    setDraft("");
     setSeconds(5 * 60 + 19);
     clearPersistedCall();
     setResetNonce((n) => n + 1);
   }, []);
 
-  const toggleFant = (k: FantKey) => setFant((f) => ({ ...f, [k]: !f[k] }));
-  const toggleVestt = (k: VesttKey) => setVestt((v) => ({ ...v, [k]: !v[k] }));
   const setFantValue = useCallback(
     (k: FantKey, v: boolean) => setFant((f) => ({ ...f, [k]: v })),
     []
@@ -439,6 +424,12 @@ export default function CallCoach() {
   const setVesttValue = useCallback(
     (k: VesttKey, v: boolean) => setVestt((prev) => ({ ...prev, [k]: v })),
     []
+  );
+
+  // formatted for the Post-call analysis transcript box
+  const liveTranscriptText = useMemo(
+    () => transcript.map((l) => `Prospect: ${l.text}`).join("\n"),
+    [transcript]
   );
 
   const active = NAV.find((n) => n.id === tab) ?? NAV[0];
@@ -505,24 +496,19 @@ export default function CallCoach() {
         <div className="cc-content">
           {tab === "live" ? (
             <LiveCoach
-              transcript={transcript}
-              draft={draft}
-              setDraft={setDraft}
               activeChips={activeChips}
               onChip={handleChip}
-              onAnalyze={handleAnalyze}
               onAction={handleAction}
               activeActions={activeActions}
+              draft={draft}
+              setDraft={setDraft}
+              onAnalyze={handleAnalyze}
               estimatingTeam={estimatingTeam}
               setEstimatingTeam={setEstimatingTeam}
               estimators={estimators}
               setEstimators={setEstimators}
               guidance={guidance}
               guidanceRef={guidanceRef}
-              fant={fant}
-              vestt={vestt}
-              toggleFant={toggleFant}
-              toggleVestt={toggleVestt}
             />
           ) : (
             <div className="cc-scroll h-full overflow-y-auto cc-enter">
@@ -533,7 +519,9 @@ export default function CallCoach() {
               {tab === "script" && (
                 <CallScript vestt={vestt} setVesttValue={setVesttValue} />
               )}
-              {tab === "roleplay" && <RolePlays key={resetNonce} />}
+              {tab === "roleplay" && (
+                <RolePlays key={resetNonce} liveTranscript={liveTranscriptText} />
+              )}
               {tab === "danger" && <DangerousSoftware />}
             </div>
           )}
@@ -544,275 +532,199 @@ export default function CallCoach() {
 }
 
 /* ================================================================== */
-/*  Live coach — full-height two-column                                */
+/*  Live coach — coaching/notes window on top, chip rail below         */
 /* ================================================================== */
 
 function LiveCoach({
-  transcript,
-  draft,
-  setDraft,
   activeChips,
   onChip,
-  onAnalyze,
   onAction,
   activeActions,
+  draft,
+  setDraft,
+  onAnalyze,
   estimatingTeam,
   setEstimatingTeam,
   estimators,
   setEstimators,
   guidance,
   guidanceRef,
-  fant,
-  vestt,
-  toggleFant,
-  toggleVestt,
 }: {
-  transcript: TranscriptLine[];
-  draft: string;
-  setDraft: (s: string) => void;
   activeChips: Set<string>;
   onChip: (c: Chip) => void;
-  onAnalyze: () => void;
   onAction: (id: string) => void;
   activeActions: Set<string>;
+  draft: string;
+  setDraft: (s: string) => void;
+  onAnalyze: () => void;
   estimatingTeam: string;
   setEstimatingTeam: (v: string) => void;
   estimators: string;
   setEstimators: (v: string) => void;
   guidance: GuidanceEntry[];
   guidanceRef: React.RefObject<HTMLDivElement | null>;
-  fant: Record<FantKey, boolean>;
-  vestt: Record<VesttKey, boolean>;
-  toggleFant: (k: FantKey) => void;
-  toggleVestt: (k: VesttKey) => void;
 }) {
-  const transcriptRef = useRef<HTMLDivElement>(null);
   const [coachingTab, setCoachingTab] = useState<"guidance" | "notes">(
     "guidance"
   );
-  useEffect(() => {
-    transcriptRef.current?.scrollTo({
-      top: transcriptRef.current.scrollHeight,
-      behavior: "smooth",
-    });
-  }, [transcript]);
 
   return (
-    <div className="h-full px-7 py-6">
-      <div className="h-full min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* ---- left: live input ---- */}
-        <section className="flex flex-col min-h-0">
-          <div className="flex items-baseline justify-between mb-2.5">
-            <SectionLabel className="mb-0">Live input</SectionLabel>
-            <span className="text-[12px] text-[var(--fg-dim)]">
-              Prospect transcript
-            </span>
-          </div>
-
-          <div
-            ref={transcriptRef}
-            className="cc-panel cc-scroll flex-1 min-h-0 overflow-y-auto p-4 space-y-3"
-          >
-            {transcript.map((line) => (
-              <div
-                key={line.id}
-                className="rounded-lg bg-[var(--surface)] border-l-2 border-[var(--border-strong)] px-4 py-3"
-              >
-                <div className="text-[10px] font-semibold tracking-[0.14em] text-[var(--fg-dim)] mb-1.5">
-                  {line.speaker}
-                </div>
-                <div className="text-[var(--fg)] text-[16px] leading-snug">
-                  {line.text}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-4 flex-none">
-            <SectionLabel>Tag what you hear</SectionLabel>
-            <div className="flex flex-wrap gap-2">
-              {CHIPS.map((chip) => (
-                <button
-                  key={chip.id}
-                  className={`chip ${activeChips.has(chip.id) ? "is-active" : ""}`}
-                  data-variant={chip.category}
-                  onClick={() => onChip(chip)}
-                >
-                  {chip.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-4 flex gap-3 flex-none">
-            <input
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") onAnalyze();
-              }}
-              placeholder="Type the prospect's objection or topic…"
-              className="cc-field flex-1 text-[16px]"
-            />
-            <button className="btn-analyze" onClick={onAnalyze}>
-              Analyze <span className="opacity-60">↗</span>
+    <div className="h-full px-7 py-6 flex flex-col min-h-0 gap-5">
+      {/* ---- top: coaching + notes (full width) ---- */}
+      <section className="flex flex-col min-h-0 flex-1">
+        <div className="flex items-center justify-between border-b border-[var(--border)] mb-3">
+          <div className="flex gap-5">
+            <button
+              className={`subtab ${coachingTab === "guidance" ? "is-active" : ""}`}
+              onClick={() => setCoachingTab("guidance")}
+            >
+              Coaching
+            </button>
+            <button
+              className={`subtab ${coachingTab === "notes" ? "is-active" : ""}`}
+              onClick={() => setCoachingTab("notes")}
+            >
+              Notes
             </button>
           </div>
-        </section>
-
-        {/* ---- right: coaching + notes ---- */}
-        <section className="flex flex-col min-h-0">
-          <div className="flex items-center justify-between border-b border-[var(--border)] mb-3">
-            <div className="flex gap-5">
-              <button
-                className={`subtab ${coachingTab === "guidance" ? "is-active" : ""}`}
-                onClick={() => setCoachingTab("guidance")}
-              >
-                Coaching
-              </button>
-              <button
-                className={`subtab ${coachingTab === "notes" ? "is-active" : ""}`}
-                onClick={() => setCoachingTab("notes")}
-              >
-                Notes
-              </button>
-            </div>
-            {coachingTab === "guidance" && (
-              <span className="text-[12px] text-[var(--fg-dim)]">
-                {guidance.length} {guidance.length === 1 ? "card" : "cards"}
-              </span>
-            )}
-          </div>
-
-          {coachingTab === "guidance" ? (
-            <>
-              <div className="flex gap-2 overflow-x-auto cc-scroll pb-2 mb-3 flex-none">
-                {ACTIONS.map((a) => (
-                  <button
-                    key={a.id}
-                    className={`action-btn ${activeActions.has(a.id) ? "is-active" : ""}`}
-                    onClick={() => onAction(a.id)}
-                  >
-                    {a.label} <span className="opacity-50">↗</span>
-                  </button>
-                ))}
-              </div>
-
-              <div
-                ref={guidanceRef}
-                className="cc-panel cc-scroll flex-1 min-h-0 overflow-y-auto p-4 space-y-3"
-              >
-                {guidance.length === 0 ? (
-                  <div className="h-full flex items-center justify-center text-center px-8">
-                    <p className="text-[var(--fg-dim)] text-[15px] max-w-sm leading-relaxed">
-                      Tap a chip or analyze what the prospect said. Live talk
-                      tracks, battlecards, and next steps land here — newest
-                      first.
-                    </p>
-                  </div>
-                ) : (
-                  guidance.map((g) => <GuidanceCard key={g.key} entry={g} />)
-                )}
-              </div>
-            </>
-          ) : (
-            <div className="cc-panel cc-scroll flex-1 min-h-0 overflow-y-auto p-5">
-              <div
-                className="text-[11px] font-semibold tracking-[0.11em] uppercase mb-4"
-                style={{ color: "var(--green)" }}
-              >
-                Call notes
-              </div>
-              <div className="space-y-3">
-                {buildNotesFields(activeChips).map((f, i) => (
-                  <div
-                    key={i}
-                    className="flex gap-3 text-[15px] leading-relaxed border-b border-[var(--border)] pb-3"
-                  >
-                    <span className="text-[var(--fg-dim)] font-medium min-w-[150px] flex-none">
-                      {f.label}
-                    </span>
-                    <span className="text-[var(--fg)]">{f.value}</span>
-                  </div>
-                ))}
-
-                <div className="flex gap-3 items-center text-[15px] border-b border-[var(--border)] pb-3">
-                  <span className="text-[var(--fg-dim)] font-medium min-w-[150px] flex-none">
-                    Estimating team
-                  </span>
-                  <select
-                    className="cc-field"
-                    style={{ maxWidth: 180 }}
-                    value={estimatingTeam}
-                    onChange={(e) => setEstimatingTeam(e.target.value)}
-                  >
-                    <option value="">—</option>
-                    <option value="Yes">Yes</option>
-                    <option value="No">No</option>
-                  </select>
-                </div>
-
-                <div className="flex gap-3 items-center text-[15px]">
-                  <span className="text-[var(--fg-dim)] font-medium min-w-[150px] flex-none">
-                    Estimators
-                  </span>
-                  <select
-                    className="cc-field"
-                    style={{ maxWidth: 180 }}
-                    value={estimators}
-                    onChange={(e) => setEstimators(e.target.value)}
-                  >
-                    <option value="">—</option>
-                    {ESTIMATOR_OPTIONS.map((o) => (
-                      <option key={o} value={o}>
-                        {o}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <p className="text-[13px] text-[var(--fg-dim)] mt-6 leading-relaxed">
-                Role, company type, trade(s), and current software auto-fill from
-                the chips you tag on the left. Set the estimating team and
-                headcount here.
-              </p>
-            </div>
+          {coachingTab === "guidance" && (
+            <span className="text-[12px] text-[var(--fg-dim)]">
+              {guidance.length} {guidance.length === 1 ? "card" : "cards"}
+            </span>
           )}
+        </div>
 
-          <Panel className="mt-4 p-4 flex-none">
-            <div className="flex items-center gap-3 flex-wrap">
-              <span className="w-12 text-[11px] font-semibold tracking-[0.11em] text-[var(--fg-muted)]">
-                FANT
-              </span>
-              {FANT.map((f) => (
+        {coachingTab === "guidance" ? (
+          <>
+            <div className="flex gap-2 overflow-x-auto cc-scroll pb-2 mb-3 flex-none">
+              {ACTIONS.map((a) => (
                 <button
-                  key={f.key}
-                  className={`tag tag--fant ${fant[f.key] ? "is-on" : ""}`}
-                  title={f.hint}
-                  onClick={() => toggleFant(f.key)}
+                  key={a.id}
+                  className={`action-btn ${activeActions.has(a.id) ? "is-active" : ""}`}
+                  onClick={() => onAction(a.id)}
                 >
-                  {f.label}
+                  {a.label} <span className="opacity-50">↗</span>
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-3 flex-wrap mt-3">
-              <span className="w-12 text-[11px] font-semibold tracking-[0.11em] text-[var(--fg-muted)]">
-                VESTT
-              </span>
-              {VESTT.map((v) => (
-                <button
-                  key={v.key}
-                  className={`tag tag--vestt ${vestt[v.key] ? "is-on" : ""}`}
-                  title={`${v.full} — ${v.hint}`}
-                  onClick={() => toggleVestt(v.key)}
-                >
-                  {v.label}
-                </button>
-              ))}
+
+            <div
+              ref={guidanceRef}
+              className="cc-panel cc-scroll flex-1 min-h-0 overflow-y-auto p-4 space-y-3"
+            >
+              {guidance.length === 0 ? (
+                <div className="h-full flex items-center justify-center text-center px-8">
+                  <p className="text-[var(--fg-dim)] text-[15px] max-w-md leading-relaxed">
+                    Tap a chip below or fire a quick action above. Live talk
+                    tracks, battlecards, and next steps land here — newest
+                    first.
+                  </p>
+                </div>
+              ) : (
+                guidance.map((g) => <GuidanceCard key={g.key} entry={g} />)
+              )}
             </div>
-          </Panel>
-        </section>
-      </div>
+          </>
+        ) : (
+          <div className="cc-panel cc-scroll flex-1 min-h-0 overflow-y-auto p-5">
+            <div
+              className="text-[11px] font-semibold tracking-[0.11em] uppercase mb-4"
+              style={{ color: "var(--green)" }}
+            >
+              Call notes
+            </div>
+            <div className="space-y-3 max-w-2xl">
+              {buildNotesFields(activeChips).map((f, i) => (
+                <div
+                  key={i}
+                  className="flex gap-3 text-[15px] leading-relaxed border-b border-[var(--border)] pb-3"
+                >
+                  <span className="text-[var(--fg-dim)] font-medium min-w-[150px] flex-none">
+                    {f.label}
+                  </span>
+                  <span className="text-[var(--fg)]">{f.value}</span>
+                </div>
+              ))}
+
+              <div className="flex gap-3 items-center text-[15px] border-b border-[var(--border)] pb-3">
+                <span className="text-[var(--fg-dim)] font-medium min-w-[150px] flex-none">
+                  Estimating team
+                </span>
+                <select
+                  className="cc-field"
+                  style={{ maxWidth: 180 }}
+                  value={estimatingTeam}
+                  onChange={(e) => setEstimatingTeam(e.target.value)}
+                >
+                  <option value="">—</option>
+                  <option value="Yes">Yes</option>
+                  <option value="No">No</option>
+                </select>
+              </div>
+
+              <div className="flex gap-3 items-center text-[15px]">
+                <span className="text-[var(--fg-dim)] font-medium min-w-[150px] flex-none">
+                  Estimators
+                </span>
+                <select
+                  className="cc-field"
+                  style={{ maxWidth: 180 }}
+                  value={estimators}
+                  onChange={(e) => setEstimators(e.target.value)}
+                >
+                  <option value="">—</option>
+                  {ESTIMATOR_OPTIONS.map((o) => (
+                    <option key={o} value={o}>
+                      {o}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <p className="text-[13px] text-[var(--fg-dim)] mt-6 leading-relaxed max-w-2xl">
+              Role, company type, trade(s), and current software auto-fill from
+              the chips you tag below. Set the estimating team and headcount
+              here.
+            </p>
+          </div>
+        )}
+      </section>
+
+      {/* ---- bottom: tag what you hear (full width) ---- */}
+      <section className="flex-none">
+        <SectionLabel>Tag what you hear</SectionLabel>
+        <div className="flex flex-wrap gap-2">
+          {CHIPS.map((chip) => (
+            <button
+              key={chip.id}
+              className={`chip ${activeChips.has(chip.id) ? "is-active" : ""}`}
+              data-variant={chip.category}
+              onClick={() => onChip(chip)}
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-3 flex gap-3">
+          <input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") onAnalyze();
+            }}
+            placeholder="Type what you heard → get a card…"
+            className="cc-field flex-1 text-[16px]"
+          />
+          <button className="btn-analyze" onClick={onAnalyze}>
+            Analyze <span className="opacity-60">↗</span>
+          </button>
+        </div>
+        <p className="mt-2 text-[12px] text-[var(--fg-dim)]">
+          Matches a battlecard and tags the chip automatically — and logs to the
+          call transcript you&apos;ll find under Role Plays → Post-call analysis.
+        </p>
+      </section>
     </div>
   );
 }

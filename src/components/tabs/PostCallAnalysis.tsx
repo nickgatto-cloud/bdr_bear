@@ -22,8 +22,13 @@ function overallColor(n: number): string {
   return "var(--danger)";
 }
 
-export default function PostCallAnalysis() {
-  const [text, setText] = useState("");
+export default function PostCallAnalysis({
+  liveTranscript = "",
+}: {
+  liveTranscript?: string;
+}) {
+  // seed from the live call (re-seeds each time this view is opened)
+  const [text, setText] = useState(liveTranscript);
   const [analysis, setAnalysis] = useState<TranscriptAnalysis | null>(null);
 
   const analyze = () => {
@@ -92,6 +97,15 @@ export default function PostCallAnalysis() {
         <button className="btn-primary" onClick={analyze} disabled={!text.trim()}>
           <LinkIcon /> Analyze call ↗
         </button>
+        {liveTranscript && (
+          <button
+            className="cc-btn"
+            onClick={() => setText(liveTranscript)}
+            title="Pull the transcript captured during the live call"
+          >
+            Pull from live call
+          </button>
+        )}
         <button className="cc-btn" onClick={() => setText(SAMPLE_TRANSCRIPT)}>
           Load sample
         </button>
@@ -99,7 +113,9 @@ export default function PostCallAnalysis() {
           <RefreshIcon />
         </button>
         <span className="text-[13px] text-[var(--fg-dim)]">
-          Supports raw notes, call logs, or Gong/Chorus exports
+          {liveTranscript
+            ? "Pre-filled from the live call — edit, then Analyze"
+            : "Supports raw notes, call logs, or Gong/Chorus exports"}
         </span>
       </div>
 
