@@ -68,6 +68,7 @@ export const CHIPS: Chip[] = [
   { id: "procore", label: "Procore/Autodesk", category: "competitor" },
   { id: "stack", label: "STACK", category: "competitor" },
   { id: "edge-sage", label: "Edge/Sage", category: "competitor" },
+  { id: "manual", label: "Manual", category: "competitor" },
 
   { id: "no-budget", label: "No budget", category: "objection" },
   { id: "dont-trust-ai", label: "Don't trust AI", category: "objection" },
@@ -177,6 +178,19 @@ export const COACHING: Record<string, CoachingCard> = {
     fant: ["F"],
     vestt: ["E"],
     keywords: ["edge", "the edge", "sage", "estimating edge"],
+  },
+  manual: {
+    id: "manual",
+    tag: "Battlecard",
+    category: "competitor",
+    heading: "Manual takeoff (by hand)",
+    signal: "They still measure by hand — paper plans, a scale ruler, or clicking PDFs manually. Slow and error-prone.",
+    talkTrack:
+      "Manual is the most expensive way to take off — it's slow, it's where errors creep in, and it caps how many bids you can chase. Togal auto-detects and measures in minutes at up to 98% accuracy, and you verify. Going from hand-measuring to AI is the single biggest time win we see. Let me run one of your live plan sets so you can watch it.",
+    tip: "Manual = the clearest ROI story. Get hours-per-takeoff today, then show minutes.",
+    fant: ["N", "T"],
+    vestt: ["V", "S"],
+    keywords: ["manual", "by hand", "pen and paper", "scale ruler", "count by hand", "measure by hand"],
   },
 
   /* ---- Objections ---- */
@@ -797,6 +811,7 @@ export const PRACTICE_LINES: Record<string, string> = {
   procore: "Everything runs through Procore for us.",
   "beam-ai": "We're already taking a look at Beam AI.",
   "edge-sage": "Our estimating all lives in The EDGE.",
+  manual: "We just do our takeoffs by hand in the PDF.",
   "no-budget": "There's just no budget for new software right now.",
   "dont-trust-ai": "Honestly, I don't trust AI with our numbers.",
   "too-busy": "We're slammed — I don't have time for this right now.",

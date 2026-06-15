@@ -81,7 +81,6 @@ function buildNotesFields(
   const isGC = trades.some((c) => c.id === "gc");
   const tradeNames = trades.filter((c) => c.id !== "gc").map(heading);
   const software = inCat("competitor").map(heading);
-  const hasEstimators = activeChips.has("have-estimators");
 
   return [
     { label: "Contact's Role", value: roles.length ? roles.join(", ") : DASH },
@@ -102,13 +101,10 @@ function buildNotesFields(
         : DASH,
     },
     { label: "Current Software", value: software.length ? software.join(", ") : DASH },
-    {
-      label: "Estimating team",
-      value: hasEstimators ? "Yes — in-house estimators" : DASH,
-    },
-    { label: "Estimators", value: DASH },
   ];
 }
+
+const ESTIMATOR_OPTIONS = ["1", "2", "3", "4", "5", "6+"];
 
 interface TranscriptLine {
   id: number;
@@ -164,6 +160,9 @@ export default function CallCoach() {
 
   const [activeChips, setActiveChips] = useState<Set<string>>(new Set());
   const [activeActions, setActiveActions] = useState<Set<string>>(new Set());
+  // editable notes fields (the rest of the notes auto-fill from chips)
+  const [estimatingTeam, setEstimatingTeam] = useState("");
+  const [estimators, setEstimators] = useState("");
   const [fant, setFant] = useState<Record<FantKey, boolean>>({
     F: false,
     A: true,
@@ -211,6 +210,9 @@ export default function CallCoach() {
             ? Math.max(...restored.map((g: GuidanceEntry) => g.key)) + 1
             : 0;
         }
+        if (typeof s.estimatingTeam === "string")
+          setEstimatingTeam(s.estimatingTeam);
+        if (typeof s.estimators === "string") setEstimators(s.estimators);
         if (typeof s.seconds === "number") setSeconds(s.seconds);
         if (typeof s.tab === "string") setTab(s.tab);
       }
@@ -230,6 +232,8 @@ export default function CallCoach() {
           draft,
           activeChips: [...activeChips],
           activeActions: [...activeActions],
+          estimatingTeam,
+          estimators,
           fant,
           vestt,
           guidance,
@@ -245,6 +249,8 @@ export default function CallCoach() {
     draft,
     activeChips,
     activeActions,
+    estimatingTeam,
+    estimators,
     fant,
     vestt,
     guidance,
@@ -413,6 +419,8 @@ export default function CallCoach() {
     nextLineId.current = SEED_TRANSCRIPT.length;
     setActiveChips(new Set());
     setActiveActions(new Set());
+    setEstimatingTeam("");
+    setEstimators("");
     setFant({ F: false, A: true, N: true, T: true });
     setVestt({ V: false, E: false, S: false, T1: false, T2: false });
     setGuidance([]);
@@ -505,6 +513,10 @@ export default function CallCoach() {
               onAnalyze={handleAnalyze}
               onAction={handleAction}
               activeActions={activeActions}
+              estimatingTeam={estimatingTeam}
+              setEstimatingTeam={setEstimatingTeam}
+              estimators={estimators}
+              setEstimators={setEstimators}
               guidance={guidance}
               guidanceRef={guidanceRef}
               fant={fant}
@@ -544,6 +556,10 @@ function LiveCoach({
   onAnalyze,
   onAction,
   activeActions,
+  estimatingTeam,
+  setEstimatingTeam,
+  estimators,
+  setEstimators,
   guidance,
   guidanceRef,
   fant,
@@ -559,6 +575,10 @@ function LiveCoach({
   onAnalyze: () => void;
   onAction: (id: string) => void;
   activeActions: Set<string>;
+  estimatingTeam: string;
+  setEstimatingTeam: (v: string) => void;
+  estimators: string;
+  setEstimators: (v: string) => void;
   guidance: GuidanceEntry[];
   guidanceRef: React.RefObject<HTMLDivElement | null>;
   fant: Record<FantKey, boolean>;
@@ -707,7 +727,7 @@ function LiveCoach({
                 {buildNotesFields(activeChips).map((f, i) => (
                   <div
                     key={i}
-                    className="flex gap-3 text-[15px] leading-relaxed border-b border-[var(--border)] pb-3 last:border-0"
+                    className="flex gap-3 text-[15px] leading-relaxed border-b border-[var(--border)] pb-3"
                   >
                     <span className="text-[var(--fg-dim)] font-medium min-w-[150px] flex-none">
                       {f.label}
@@ -715,10 +735,46 @@ function LiveCoach({
                     <span className="text-[var(--fg)]">{f.value}</span>
                   </div>
                 ))}
+
+                <div className="flex gap-3 items-center text-[15px] border-b border-[var(--border)] pb-3">
+                  <span className="text-[var(--fg-dim)] font-medium min-w-[150px] flex-none">
+                    Estimating team
+                  </span>
+                  <select
+                    className="cc-field"
+                    style={{ maxWidth: 180 }}
+                    value={estimatingTeam}
+                    onChange={(e) => setEstimatingTeam(e.target.value)}
+                  >
+                    <option value="">—</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                </div>
+
+                <div className="flex gap-3 items-center text-[15px]">
+                  <span className="text-[var(--fg-dim)] font-medium min-w-[150px] flex-none">
+                    Estimators
+                  </span>
+                  <select
+                    className="cc-field"
+                    style={{ maxWidth: 180 }}
+                    value={estimators}
+                    onChange={(e) => setEstimators(e.target.value)}
+                  >
+                    <option value="">—</option>
+                    {ESTIMATOR_OPTIONS.map((o) => (
+                      <option key={o} value={o}>
+                        {o}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <p className="text-[13px] text-[var(--fg-dim)] mt-6 leading-relaxed">
-                Auto-filled live from the chips you tag on the left.
-                &ldquo;Estimators&rdquo; is yours to fill in.
+                Role, company type, trade(s), and current software auto-fill from
+                the chips you tag on the left. Set the estimating team and
+                headcount here.
               </p>
             </div>
           )}
