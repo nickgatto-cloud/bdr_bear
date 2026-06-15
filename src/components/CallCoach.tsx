@@ -55,9 +55,7 @@ const NAV: {
 
 const ACTIONS: { id: string; label: string }[] = [
   { id: "book-demo", label: "Book demo" },
-  { id: "fant-vestt", label: "FANT+VESTT brief" },
   { id: "demo-close", label: "Demo close" },
-  { id: "battlecard", label: "Battlecard" },
   { id: "follow-up", label: "Follow-up" },
 ];
 
