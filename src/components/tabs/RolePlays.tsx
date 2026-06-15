@@ -44,7 +44,6 @@ export default function RolePlays() {
 const GROUPS: { cat: ChipCategory; label: string }[] = [
   { cat: "objection", label: "Objections" },
   { cat: "competitor", label: "Competitors" },
-  { cat: "tech", label: "Tech" },
   { cat: "security", label: "Security" },
 ];
 

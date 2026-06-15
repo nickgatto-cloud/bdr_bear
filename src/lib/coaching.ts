@@ -69,6 +69,7 @@ export const CHIPS: Chip[] = [
   { id: "stack", label: "STACK", category: "competitor" },
   { id: "edge-sage", label: "Edge/Sage", category: "competitor" },
   { id: "manual", label: "Manual", category: "competitor" },
+  { id: "claude-llm", label: "Claude/LLM", category: "competitor" },
 
   { id: "no-budget", label: "No budget", category: "objection" },
   { id: "dont-trust-ai", label: "Don't trust AI", category: "objection" },
@@ -79,7 +80,6 @@ export const CHIPS: Chip[] = [
   { id: "too-complex", label: "Too complex", category: "objection" },
   { id: "need-think", label: "Need to think", category: "objection" },
 
-  { id: "claude-llm", label: "Claude/LLM", category: "tech" },
   { id: "it-security", label: "IT / Security", category: "security" },
 
   { id: "drywall", label: "Drywall/Framing", category: "trade" },
@@ -299,19 +299,19 @@ export const COACHING: Record<string, CoachingCard> = {
     keywords: ["think about it", "need to think", "internally", "discuss internally", "get back to you", "circle back"],
   },
 
-  /* ---- Tech ---- */
+  /* ---- General LLM (competitor) ---- */
   "claude-llm": {
     id: "claude-llm",
-    tag: "Tech deep-dive",
-    category: "tech",
-    heading: "\"Is this just ChatGPT / an LLM?\"",
-    signal: "They're testing whether the 'AI' is a generic chatbot bolted on.",
+    tag: "Battlecard",
+    category: "competitor",
+    heading: "Claude / general LLM",
+    signal: "They're leaning on a general AI chatbot (ChatGPT, Claude, Copilot) and assume it can do the takeoff.",
     talkTrack:
-      "No — the takeoff detection is purpose-built computer-vision trained on real construction drawings, not a general chatbot. Language models are great for summarizing and Q&A, but measuring areas and counts is a specialized vision problem. That's why the accuracy holds up on actual plan sets.",
-    tip: "Separate the CV detection engine from any LLM assist features.",
+      "A general LLM is great for summarizing and Q&A — but it guesses, and it'll confidently hand you quantities that aren't on the page. It isn't built to measure a drawing. Togal's detection is purpose-built computer-vision trained on real construction plans, up to 98% accuracy, and you verify every region. Use the chatbot for questions; use Togal for the numbers you're putting on a bid.",
+    tip: "Don't bash the LLM — show where it breaks (measuring) vs. where Togal is built to win.",
     fant: ["N"],
     vestt: ["E"],
-    keywords: ["claude", "chatgpt", "llm", "gpt", "language model", "just ai", "is it ai"],
+    keywords: ["claude", "chatgpt", "llm", "gpt", "language model", "just ai", "is it ai", "copilot"],
   },
 
   /* ---- Security ---- */
@@ -820,7 +820,7 @@ export const PRACTICE_LINES: Record<string, string> = {
   "have-estimators": "We already have estimators who handle all this.",
   "too-complex": "This sounds complicated to roll out.",
   "need-think": "We need to think about it internally.",
-  "claude-llm": "Is this just ChatGPT under the hood?",
+  "claude-llm": "Honestly, we've just been using ChatGPT for a lot of this.",
   "it-security": "Our IT team will need to review the security first.",
 };
 
