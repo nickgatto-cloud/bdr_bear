@@ -65,6 +65,51 @@ const ACTIONS: { id: string; label: string }[] = [
   { id: "follow-up", label: "Follow-up" },
 ];
 
+/** Build the structured call-notes from the currently active chips (live). */
+function buildNotesFields(
+  activeChips: Set<string>
+): { label: string; value: string }[] {
+  const active = CHIPS.filter((c) => activeChips.has(c.id));
+  const inCat = (cat: string) => active.filter((c) => c.category === cat);
+  const heading = (c: Chip) => COACHING[c.id]?.heading ?? c.label;
+  const DASH = "—";
+
+  const roles = inCat("role")
+    .filter((c) => c.id !== "bid-volume")
+    .map((c) => c.label.replace(/\s*role$/i, ""));
+  const trades = inCat("trade");
+  const isGC = trades.some((c) => c.id === "gc");
+  const tradeNames = trades.filter((c) => c.id !== "gc").map(heading);
+  const software = inCat("competitor").map(heading);
+  const hasEstimators = activeChips.has("have-estimators");
+
+  return [
+    { label: "Contact's Role", value: roles.length ? roles.join(", ") : DASH },
+    {
+      label: "Company Type",
+      value: isGC
+        ? "General Contractor"
+        : trades.length
+        ? "Specialty / Subcontractor"
+        : DASH,
+    },
+    {
+      label: "Company Trade(s)",
+      value: tradeNames.length
+        ? tradeNames.join(", ")
+        : isGC
+        ? "General (multi-trade)"
+        : DASH,
+    },
+    { label: "Current Software", value: software.length ? software.join(", ") : DASH },
+    {
+      label: "Estimating team",
+      value: hasEstimators ? "Yes — in-house estimators" : DASH,
+    },
+    { label: "Estimators", value: DASH },
+  ];
+}
+
 interface TranscriptLine {
   id: number;
   speaker: "PROSPECT";
@@ -152,13 +197,18 @@ export default function CallCoach() {
         if (typeof s.draft === "string") setDraft(s.draft);
         if (Array.isArray(s.activeChips)) setActiveChips(new Set(s.activeChips));
         if (Array.isArray(s.activeActions))
-          setActiveActions(new Set(s.activeActions));
+          setActiveActions(
+            new Set(s.activeActions.filter((a: string) => a !== "notes"))
+          );
         if (s.fant) setFant(s.fant);
         if (s.vestt) setVestt(s.vestt);
         if (Array.isArray(s.guidance)) {
-          setGuidance(s.guidance);
-          guidanceKey.current = s.guidance.length
-            ? Math.max(...s.guidance.map((g: GuidanceEntry) => g.key)) + 1
+          const restored = s.guidance.filter(
+            (g: GuidanceEntry) => g.sourceActionId !== "notes"
+          );
+          setGuidance(restored);
+          guidanceKey.current = restored.length
+            ? Math.max(...restored.map((g: GuidanceEntry) => g.key)) + 1
             : 0;
         }
         if (typeof s.seconds === "number") setSeconds(s.seconds);
@@ -517,6 +567,9 @@ function LiveCoach({
   toggleVestt: (k: VesttKey) => void;
 }) {
   const transcriptRef = useRef<HTMLDivElement>(null);
+  const [coachingTab, setCoachingTab] = useState<"guidance" | "notes">(
+    "guidance"
+  );
   useEffect(() => {
     transcriptRef.current?.scrollTo({
       top: transcriptRef.current.scrollHeight,
@@ -587,42 +640,88 @@ function LiveCoach({
           </div>
         </section>
 
-        {/* ---- right: coaching guidance ---- */}
+        {/* ---- right: coaching + notes ---- */}
         <section className="flex flex-col min-h-0">
-          <div className="flex items-baseline justify-between mb-2.5">
-            <SectionLabel className="mb-0">Coaching guidance</SectionLabel>
-            <span className="text-[12px] text-[var(--fg-dim)]">
-              {guidance.length} {guidance.length === 1 ? "card" : "cards"}
-            </span>
-          </div>
-
-          <div className="flex gap-2 overflow-x-auto cc-scroll pb-2 mb-3 flex-none">
-            {ACTIONS.map((a) => (
+          <div className="flex items-center justify-between border-b border-[var(--border)] mb-3">
+            <div className="flex gap-5">
               <button
-                key={a.id}
-                className={`action-btn ${activeActions.has(a.id) ? "is-active" : ""}`}
-                onClick={() => onAction(a.id)}
+                className={`subtab ${coachingTab === "guidance" ? "is-active" : ""}`}
+                onClick={() => setCoachingTab("guidance")}
               >
-                {a.label} <span className="opacity-50">↗</span>
+                Coaching
               </button>
-            ))}
-          </div>
-
-          <div
-            ref={guidanceRef}
-            className="cc-panel cc-scroll flex-1 min-h-0 overflow-y-auto p-4 space-y-3"
-          >
-            {guidance.length === 0 ? (
-              <div className="h-full flex items-center justify-center text-center px-8">
-                <p className="text-[var(--fg-dim)] text-[15px] max-w-sm leading-relaxed">
-                  Tap a chip or analyze what the prospect said. Live talk tracks,
-                  battlecards, and next steps land here — newest first.
-                </p>
-              </div>
-            ) : (
-              guidance.map((g) => <GuidanceCard key={g.key} entry={g} />)
+              <button
+                className={`subtab ${coachingTab === "notes" ? "is-active" : ""}`}
+                onClick={() => setCoachingTab("notes")}
+              >
+                Notes
+              </button>
+            </div>
+            {coachingTab === "guidance" && (
+              <span className="text-[12px] text-[var(--fg-dim)]">
+                {guidance.length} {guidance.length === 1 ? "card" : "cards"}
+              </span>
             )}
           </div>
+
+          {coachingTab === "guidance" ? (
+            <>
+              <div className="flex gap-2 overflow-x-auto cc-scroll pb-2 mb-3 flex-none">
+                {ACTIONS.map((a) => (
+                  <button
+                    key={a.id}
+                    className={`action-btn ${activeActions.has(a.id) ? "is-active" : ""}`}
+                    onClick={() => onAction(a.id)}
+                  >
+                    {a.label} <span className="opacity-50">↗</span>
+                  </button>
+                ))}
+              </div>
+
+              <div
+                ref={guidanceRef}
+                className="cc-panel cc-scroll flex-1 min-h-0 overflow-y-auto p-4 space-y-3"
+              >
+                {guidance.length === 0 ? (
+                  <div className="h-full flex items-center justify-center text-center px-8">
+                    <p className="text-[var(--fg-dim)] text-[15px] max-w-sm leading-relaxed">
+                      Tap a chip or analyze what the prospect said. Live talk
+                      tracks, battlecards, and next steps land here — newest
+                      first.
+                    </p>
+                  </div>
+                ) : (
+                  guidance.map((g) => <GuidanceCard key={g.key} entry={g} />)
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="cc-panel cc-scroll flex-1 min-h-0 overflow-y-auto p-5">
+              <div
+                className="text-[11px] font-semibold tracking-[0.11em] uppercase mb-4"
+                style={{ color: "var(--green)" }}
+              >
+                Call notes
+              </div>
+              <div className="space-y-3">
+                {buildNotesFields(activeChips).map((f, i) => (
+                  <div
+                    key={i}
+                    className="flex gap-3 text-[15px] leading-relaxed border-b border-[var(--border)] pb-3 last:border-0"
+                  >
+                    <span className="text-[var(--fg-dim)] font-medium min-w-[150px] flex-none">
+                      {f.label}
+                    </span>
+                    <span className="text-[var(--fg)]">{f.value}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[13px] text-[var(--fg-dim)] mt-6 leading-relaxed">
+                Auto-filled live from the chips you tag on the left.
+                &ldquo;Estimators&rdquo; is yours to fill in.
+              </p>
+            </div>
+          )}
 
           <Panel className="mt-4 p-4 flex-none">
             <div className="flex items-center gap-3 flex-wrap">
@@ -670,7 +769,13 @@ const ACCENT_HEX: Record<GuidanceEntry["accent"], string> = {
   neutral: "var(--border-strong)",
 };
 
-function GuidanceCard({ entry }: { entry: GuidanceEntry }) {
+function GuidanceCard({
+  entry,
+  notesFields,
+}: {
+  entry: GuidanceEntry;
+  notesFields?: { label: string; value: string }[];
+}) {
   return (
     <div
       className="cc-enter rounded-lg bg-[var(--surface)] border border-[var(--border)] px-5 py-4"
@@ -690,6 +795,18 @@ function GuidanceCard({ entry }: { entry: GuidanceEntry }) {
       <h3 className="text-[var(--fg)] text-lg font-semibold mb-2">
         {entry.heading}
       </h3>
+      {notesFields && (
+        <div className="space-y-1.5">
+          {notesFields.map((f, i) => (
+            <div key={i} className="flex gap-2 text-[14px] leading-relaxed">
+              <span className="text-[var(--fg-dim)] font-medium min-w-[124px] flex-none">
+                {f.label}
+              </span>
+              <span className="text-[var(--fg)]">{f.value}</span>
+            </div>
+          ))}
+        </div>
+      )}
       <div className="space-y-2.5">
         {entry.signal && (
           <p className="text-[var(--fg-muted)] text-[14px] leading-relaxed">
