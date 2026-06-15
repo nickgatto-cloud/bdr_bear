@@ -619,7 +619,11 @@ function LiveCoach({
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 items-start">
+                <div
+                  className={`grid gap-3 items-start ${
+                    guidance.length >= 3 ? "grid-cols-1 xl:grid-cols-2" : "grid-cols-1"
+                  }`}
+                >
                   {guidance.map((g, i) => (
                     <GuidanceCard key={g.key} entry={g} isNew={i === 0} />
                   ))}
