@@ -43,6 +43,22 @@ npm run dev      # http://localhost:3000
 npm run build && npm start   # production
 ```
 
+### Live AI role-play (Practice scenario)
+
+The **Role plays → Practice scenario** tab can run a live back-and-forth where
+Claude plays the prospect. This requires an Anthropic API key, read server-side
+only (never exposed to the browser):
+
+- **Local:** create `togal-call-coach/.env.local` with:
+  ```
+  ANTHROPIC_API_KEY=sk-ant-...
+  ```
+- **Railway (production):** add `ANTHROPIC_API_KEY` to the service's Variables.
+
+Without the key, the rest of the app works fully; the Practice scenario shows a
+clear "set ANTHROPIC_API_KEY" message instead of live replies. The role-play
+uses `claude-opus-4-8` via the official `@anthropic-ai/sdk`.
+
 ## Structure
 
 | Path | Purpose |
@@ -51,6 +67,8 @@ npm run build && npm start   # production
 | `src/app/layout.tsx` | Poppins font + metadata |
 | `src/app/globals.css` | Dark theme + brand tokens + component styles |
 | `src/components/CallCoach.tsx` | The full interactive client component |
+| `src/components/tabs/*` | Book demo, FANT qualify, Call script, Role plays, Dangerous software |
+| `src/app/api/roleplay/route.ts` | Server route — Claude plays the prospect (Practice scenario) |
 | `src/lib/coaching.ts` | Coaching knowledge base — chips, battlecards, frameworks, scripts |
 
 ## Notes
