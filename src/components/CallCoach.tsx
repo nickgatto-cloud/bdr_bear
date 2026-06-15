@@ -13,6 +13,7 @@ import {
   COACHING,
   buildAction,
   matchUtterance,
+  PRACTICE_LINES,
   type Chip,
   type CoachingCard,
   type FantKey,
@@ -104,6 +105,8 @@ interface TranscriptLine {
   id: number;
   speaker: "PROSPECT";
   text: string;
+  /** set when the line was logged by tagging a chip — removed if untagged */
+  chipId?: string;
 }
 
 interface GuidanceEntry extends GuidanceBlock {
@@ -330,10 +333,25 @@ export default function CallCoach() {
         return next;
       });
       if (isActive) {
+        // deselect → drop the card and any transcript line this chip logged
         setGuidance((g) => g.filter((e) => e.sourceChipId !== chip.id));
+        setTranscript((t) => t.filter((l) => l.chipId !== chip.id));
       } else {
         const card = COACHING[chip.id];
         if (card) pushCard(card, chip.id);
+        // tagging something the prospect said also logs it to the transcript
+        const heard = PRACTICE_LINES[chip.id];
+        if (heard) {
+          setTranscript((t) => [
+            ...t,
+            {
+              id: nextLineId.current++,
+              speaker: "PROSPECT",
+              text: heard,
+              chipId: chip.id,
+            },
+          ]);
+        }
       }
     },
     [activeChips, pushCard]
