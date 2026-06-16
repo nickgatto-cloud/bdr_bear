@@ -310,6 +310,26 @@ body {
   border: 1px solid var(--border);
   box-shadow: var(--shadow-panel);
 }
+
+/* drag-to-resize grip pinned to a panel's bottom-right corner */
+.cc-resize {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  cursor: ns-resize;
+  opacity: 0.4;
+  transition: opacity 0.15s ease;
+  touch-action: none;
+  z-index: 6;
+}
+.cc-resize:hover {
+  opacity: 0.9;
+}
 .cc-label {
   display: block;
   font-size: 11px;

@@ -592,6 +592,7 @@ function LiveCoach({
     "guidance"
   );
   const [copied, setCopied] = useState(false);
+  const [feedH, setFeedH] = useState<number | null>(null);
 
   // assemble the notes as a plain-text block (for pasting into HubSpot)
   const buildNotesText = () => {
@@ -636,10 +637,27 @@ function LiveCoach({
     );
   };
 
+  // drag the resize grip to grow/shrink the feed; double-click resets to fill
+  const startResize = (e: React.PointerEvent) => {
+    e.preventDefault();
+    const startY = e.clientY;
+    const startH = guidanceRef.current?.offsetHeight ?? 400;
+    const move = (ev: PointerEvent) =>
+      setFeedH(Math.max(240, startH + (ev.clientY - startY)));
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
+  // feed fills by default (flex-1); once resized it takes an explicit height
+  const sectionFill = coachingTab === "notes" || feedH === null;
+
   return (
-    <div className="h-full px-7 py-6 flex flex-col min-h-0 gap-5">
+    <div className="h-full px-7 py-6 flex flex-col min-h-0 gap-5 overflow-y-auto cc-scroll">
       {/* ---- top: coaching + notes (full width) ---- */}
-      <section className="flex flex-col min-h-0 flex-1">
+      <section className={`flex flex-col min-h-0 ${sectionFill ? "flex-1" : ""}`}>
         <div className="flex items-center justify-between border-b border-[var(--border)] mb-3">
           <div className="flex gap-5">
             <button
@@ -677,9 +695,13 @@ function LiveCoach({
             </div>
 
             <div
-              ref={guidanceRef}
-              className="cc-panel cc-scroll flex-1 min-h-0 overflow-y-auto p-4"
+              className={`relative ${feedH === null ? "flex-1 min-h-0" : ""}`}
+              style={feedH !== null ? { height: feedH } : undefined}
             >
+              <div
+                ref={guidanceRef}
+                className="cc-panel cc-scroll h-full overflow-y-auto p-4"
+              >
               {guidance.length === 0 ? (
                 <div className="h-full flex items-center justify-center text-center px-8">
                   <p className="text-[var(--fg-dim)] text-[15px] max-w-md leading-relaxed">
@@ -714,6 +736,23 @@ function LiveCoach({
                   );
                 })()
               )}
+              </div>
+              <div
+                onPointerDown={startResize}
+                onDoubleClick={() => setFeedH(null)}
+                title="Drag to resize · double-click to reset"
+                aria-label="Resize panel"
+                className="cc-resize"
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden>
+                  <path
+                    d="M12 5L5 12M12 9L9 12"
+                    stroke="var(--fg-muted)"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
             </div>
           </>
         ) : (
