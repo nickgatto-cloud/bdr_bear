@@ -11,11 +11,13 @@ import {
 import {
   CHIPS,
   COACHING,
+  COMPARISONS,
   buildAction,
   matchUtterance,
   PRACTICE_LINES,
   type Chip,
   type CoachingCard,
+  type Comparison,
   type FantKey,
   type VesttKey,
   type GuidanceBlock,
@@ -119,6 +121,10 @@ interface GuidanceEntry extends GuidanceBlock {
   signal?: string;
   reply?: string;
   tip?: string;
+  /** chip category — routes the card to the left (competitor) or right column */
+  category?: string;
+  /** competitor id used to look up its Togal-vs-X comparison table */
+  competitorId?: string;
 }
 
 const ACCENT_BY_CATEGORY: Record<string, GuidanceEntry["accent"]> = {
@@ -301,6 +307,8 @@ export default function CallCoach() {
         tag: card.tag,
         heading: card.heading,
         accent: ACCENT_BY_CATEGORY[card.category] ?? "neutral",
+        category: card.category,
+        competitorId: card.category === "competitor" ? card.id : undefined,
         signal: card.signal,
         reply: card.talkTrack,
         tip: card.tip,
@@ -675,21 +683,36 @@ function LiveCoach({
               {guidance.length === 0 ? (
                 <div className="h-full flex items-center justify-center text-center px-8">
                   <p className="text-[var(--fg-dim)] text-[15px] max-w-md leading-relaxed">
-                    Tap a chip below or fire a quick action above. Live talk
-                    tracks, battlecards, and next steps land here — newest
-                    first.
+                    Tap a chip below or fire a quick action above. Competitor
+                    comparisons land on the left; objections, trades, and roles
+                    on the right — newest first.
                   </p>
                 </div>
               ) : (
-                <div
-                  className={`grid gap-3 items-start ${
-                    guidance.length >= 3 ? "grid-cols-1 xl:grid-cols-2" : "grid-cols-1"
-                  }`}
-                >
-                  {guidance.map((g, i) => (
-                    <GuidanceCard key={g.key} entry={g} isNew={i === 0} />
-                  ))}
-                </div>
+                (() => {
+                  const comps = guidance.filter((g) => g.category === "competitor");
+                  const others = guidance.filter((g) => g.category !== "competitor");
+                  if (comps.length > 0 && others.length > 0) {
+                    return (
+                      <div className="grid grid-cols-1 xl:grid-cols-[1.25fr_1fr] gap-4 items-start">
+                        <div className="space-y-3">
+                          {comps.map((g, i) => renderGuidance(g, i === 0))}
+                        </div>
+                        <div className="space-y-3">
+                          {others.map((g, i) => (
+                            <BulletCard key={g.key} entry={g} isNew={i === 0} />
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
+                  const list = comps.length > 0 ? comps : others;
+                  return (
+                    <div className="space-y-3 max-w-3xl">
+                      {list.map((g, i) => renderGuidance(g, i === 0))}
+                    </div>
+                  );
+                })()
               )}
             </div>
           </>
@@ -832,33 +855,46 @@ const ACCENT_HEX: Record<GuidanceEntry["accent"], string> = {
   neutral: "var(--border-strong)",
 };
 
-function GuidanceCard({
-  entry,
-  isNew,
-  notesFields,
-}: {
-  entry: GuidanceEntry;
-  isNew?: boolean;
-  notesFields?: { label: string; value: string }[];
-}) {
+/** Split a talk track into one-sentence bullets (no lookbehind, for browser safety). */
+function toBullets(text: string): string[] {
+  return text
+    .replace(/([.?!])\s+/g, "$1\n")
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+/** Competitor with a comparison table → table; everything else → bullet card. */
+function renderGuidance(g: GuidanceEntry, isNew: boolean) {
+  const comp = g.competitorId ? COMPARISONS[g.competitorId] : undefined;
+  return comp ? (
+    <ComparisonCard key={g.key} comparison={comp} isNew={isNew} />
+  ) : (
+    <BulletCard key={g.key} entry={g} isNew={isNew} />
+  );
+}
+
+function NewBadge() {
+  return (
+    <span
+      className="text-[9px] font-semibold tracking-[0.08em] uppercase px-1.5 py-0.5 rounded-full"
+      style={{ color: "var(--bg)", background: "var(--green)" }}
+    >
+      New
+    </span>
+  );
+}
+
+function BulletCard({ entry, isNew }: { entry: GuidanceEntry; isNew?: boolean }) {
   const accent = ACCENT_HEX[entry.accent];
-  // signal + tip are coaching meta, not the words to say — fold into one dim line
-  const meta = [entry.signal, entry.tip].filter(Boolean).join(" · ");
+  const bullets = entry.reply ? toBullets(entry.reply) : entry.body;
   return (
     <div
       className="cc-enter rounded-lg bg-[var(--surface)] border border-[var(--border)] px-4 py-3"
       style={{ borderLeft: `3px solid ${accent}` }}
     >
-      {/* header: New badge + tag + heading on one row */}
       <div className="flex items-center gap-2 flex-wrap mb-2">
-        {isNew && (
-          <span
-            className="text-[9px] font-semibold tracking-[0.08em] uppercase px-1.5 py-0.5 rounded-full"
-            style={{ color: "var(--bg)", background: "var(--green)" }}
-          >
-            New
-          </span>
-        )}
+        {isNew && <NewBadge />}
         <span
           className="text-[10px] font-semibold tracking-[0.09em] uppercase px-2 py-0.5 rounded-full"
           style={{ color: accent, background: "rgba(255,255,255,0.05)" }}
@@ -870,42 +906,131 @@ function GuidanceCard({
         </h3>
       </div>
 
-      {notesFields && (
-        <div className="space-y-1.5 mb-2">
-          {notesFields.map((f, i) => (
-            <div key={i} className="flex gap-2 text-[13px] leading-relaxed">
-              <span className="text-[var(--fg-dim)] font-medium min-w-[124px] flex-none">
-                {f.label}
-              </span>
-              <span className="text-[var(--fg)]">{f.value}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* the reply — the hero, kept bold, just stripped of chrome */}
-      {entry.reply && (
-        <p
-          className="text-[var(--fg)] text-[14px] font-semibold leading-snug pl-3"
-          style={{ borderLeft: `2px solid ${accent}` }}
-        >
-          {entry.reply}
+      {entry.signal && (
+        <p className="text-[11px] text-[var(--fg-dim)] leading-snug mb-2">
+          {entry.signal}
         </p>
       )}
 
-      {entry.body.length > 0 && (
-        <div className="space-y-1.5">
-          {entry.body.map((b, i) => (
-            <p key={i} className="text-[var(--fg-muted)] text-[13px] leading-relaxed">
+      <ul className="space-y-1.5">
+        {bullets.map((b, i) => (
+          <li key={i} className="flex gap-2 text-[14px] leading-snug">
+            <span className="flex-none mt-[2px]" style={{ color: accent }}>
+              •
+            </span>
+            <span
+              className={
+                i === 0 ? "text-[var(--fg)] font-semibold" : "text-[var(--fg-muted)]"
+              }
+            >
               {b}
-            </p>
-          ))}
-        </div>
+            </span>
+          </li>
+        ))}
+      </ul>
+
+      {entry.tip && (
+        <p className="text-[11px] text-[var(--fg-dim)] leading-snug mt-2">
+          <span className="font-medium">Tip: </span>
+          {entry.tip}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function Mark({ on }: { on: boolean }) {
+  return on ? (
+    <svg width="17" height="17" viewBox="0 0 24 24" aria-hidden>
+      <circle cx="12" cy="12" r="11" fill="var(--green)" />
+      <path
+        d="M7 12.5l3.3 3.3L17 9"
+        fill="none"
+        stroke="var(--bg)"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  ) : (
+    <svg width="17" height="17" viewBox="0 0 24 24" aria-hidden>
+      <circle cx="12" cy="12" r="10.5" fill="none" stroke="var(--fg-dim)" strokeWidth="1.4" />
+      <path
+        d="M8.7 8.7l6.6 6.6M15.3 8.7l-6.6 6.6"
+        stroke="var(--fg-dim)"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function ComparisonCard({
+  comparison,
+  isNew,
+}: {
+  comparison: Comparison;
+  isNew?: boolean;
+}) {
+  const accent = ACCENT_HEX.orange;
+  const cols = { gridTemplateColumns: "1fr 48px 64px" } as const;
+  return (
+    <div
+      className="cc-enter rounded-lg bg-[var(--surface)] border border-[var(--border)] px-4 py-3"
+      style={{ borderLeft: `3px solid ${accent}` }}
+    >
+      <div className="flex items-center gap-2 flex-wrap mb-1">
+        {isNew && <NewBadge />}
+        <span
+          className="text-[10px] font-semibold tracking-[0.09em] uppercase px-2 py-0.5 rounded-full"
+          style={{ color: accent, background: "rgba(255,255,255,0.05)" }}
+        >
+          Comparison
+        </span>
+        <h3 className="text-[var(--fg)] text-[15px] font-semibold leading-tight">
+          Togal vs {comparison.them}
+        </h3>
+      </div>
+
+      {comparison.proof && (
+        <p className="text-[11px] text-[var(--fg-dim)] leading-snug mb-2.5">
+          Proof: {comparison.proof}
+        </p>
       )}
 
-      {meta && (
-        <p className="text-[11px] text-[var(--fg-dim)] leading-snug mt-2">{meta}</p>
-      )}
+      <div
+        className="grid items-center pb-1.5 mb-0.5 border-b border-[var(--border-strong)]"
+        style={cols}
+      >
+        <span className="text-[11px] text-[var(--fg-dim)]">Feature</span>
+        <span
+          className="text-[11px] font-semibold text-center"
+          style={{ color: "var(--green)" }}
+        >
+          Togal
+        </span>
+        <span className="text-[11px] text-[var(--fg-muted)] text-center">
+          {comparison.them}
+        </span>
+      </div>
+
+      {comparison.rows.map((r, i) => (
+        <div
+          key={i}
+          className="grid items-center py-[6px] border-b border-[var(--border)]"
+          style={cols}
+        >
+          <span className="text-[13px] text-[var(--fg-muted)] leading-snug pr-2">
+            {r.feature}
+          </span>
+          <span className="flex justify-center">
+            <Mark on={r.togal} />
+          </span>
+          <span className="flex justify-center">
+            <Mark on={r.them} />
+          </span>
+        </div>
+      ))}
     </div>
   );
 }

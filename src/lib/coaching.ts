@@ -98,6 +98,107 @@ export const CHIPS: Chip[] = [
 ];
 
 /* ------------------------------------------------------------------ */
+/*  Competitor comparisons — Togal vs X feature matrices               */
+/*  (sourced from Togal's official "VS" one-pagers)                    */
+/* ------------------------------------------------------------------ */
+
+export interface ComparisonRow {
+  feature: string;
+  togal: boolean;
+  them: boolean;
+}
+export interface Comparison {
+  them: string; // short competitor label for the column header
+  proof?: string;
+  rows: ComparisonRow[];
+}
+
+export const COMPARISONS: Record<string, Comparison> = {
+  bluebeam: {
+    them: "Bluebeam",
+    proof: "NC Painting went 19 → 60 bids/month with the same team.",
+    rows: [
+      { feature: "AI auto-detect & count", togal: true, them: false },
+      { feature: "AI image search", togal: true, them: false },
+      { feature: "Togal GPT", togal: true, them: false },
+      { feature: "Cloud-based", togal: true, them: false },
+      { feature: "Arc-area, split & merge tools", togal: true, them: false },
+      { feature: "AI included in one fee", togal: true, them: false },
+      { feature: "PDF markup / RFIs / submittals", togal: false, them: true },
+    ],
+  },
+  planswift: {
+    them: "PlanSwift",
+    proof: "A former PlanSwift customer tripled monthly bids after switching.",
+    rows: [
+      { feature: "AI auto-tracing", togal: true, them: false },
+      { feature: "Cloud-based", togal: true, them: false },
+      { feature: "Uncapped real-time collaboration", togal: true, them: false },
+      { feature: "Continuous updates & support", togal: true, them: false },
+      { feature: "10–20× faster on floor plans", togal: true, them: false },
+      { feature: "QuickBooks export", togal: false, them: true },
+    ],
+  },
+  ost: {
+    them: "OST",
+    proof: "KU study: ~70% faster, ~5% accuracy gap; Clark moved 170 estimators.",
+    rows: [
+      { feature: "AI as core product (not beta)", togal: true, them: false },
+      { feature: "Arc & circle cuts", togal: true, them: false },
+      { feature: "Advanced geometry tools", togal: true, them: false },
+      { feature: "Custom formulas", togal: true, them: false },
+      { feature: "All features in one fee", togal: true, them: false },
+      { feature: "Real-time cloud collaboration", togal: true, them: false },
+      { feature: "30+ years in market", togal: false, them: true },
+    ],
+  },
+  stack: {
+    them: "STACK",
+    proof: "With STACK you drop to view-only — data locked — if you don't renew.",
+    rows: [
+      { feature: "Purpose-built AI takeoff focus", togal: true, them: false },
+      { feature: "Simple UI / fast start", togal: true, them: false },
+      { feature: "Frequent product updates", togal: true, them: false },
+      { feature: "Keep data access if you lapse", togal: true, them: false },
+      { feature: "All-in-one precon (bid/project mgmt)", togal: false, them: true },
+    ],
+  },
+  "beam-ai": {
+    them: "Beam",
+    proof: "Beam is offshore done-for-you; Togal is software you run and own.",
+    rows: [
+      { feature: "You run it yourself (software)", togal: true, them: false },
+      { feature: "You keep control of your data", togal: true, them: false },
+      { feature: "Instant, self-serve turnaround", togal: true, them: false },
+      { feature: "Flat fee (no per-sheet charges)", togal: true, them: false },
+      { feature: "iPad support", togal: true, them: false },
+      { feature: "Done-for-you takeoff service", togal: false, them: true },
+    ],
+  },
+  kreo: {
+    them: "Kreo",
+    proof: "Kreo is foreign-owned with no manual fallback when the AI stalls.",
+    rows: [
+      { feature: "Manual fallback when AI gets stuck", togal: true, them: false },
+      { feature: "US-owned (Florida-based)", togal: true, them: false },
+      { feature: "All features in one fee", togal: true, them: false },
+      { feature: "Unlimited viewer-only accounts", togal: true, them: false },
+      { feature: "CAD / DWG / DXF import", togal: false, them: true },
+    ],
+  },
+  procore: {
+    them: "Procore",
+    proof: "Different jobs — Procore runs the project, Togal does the takeoff.",
+    rows: [
+      { feature: "AI takeoff & quantity extraction", togal: true, them: false },
+      { feature: "Feeds quantities into your workflow", togal: true, them: false },
+      { feature: "Project & document management", togal: false, them: true },
+      { feature: "Construction-management platform", togal: false, them: true },
+    ],
+  },
+};
+
+/* ------------------------------------------------------------------ */
 /*  Coaching cards                                                     */
 /* ------------------------------------------------------------------ */
 
