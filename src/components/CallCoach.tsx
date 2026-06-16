@@ -428,7 +428,7 @@ export default function CallCoach() {
     setFant({ F: false, A: true, N: true, T: true });
     setVestt({ V: false, E: false, S: false, T1: false, T2: false });
     setGuidance([]);
-    setSeconds(5 * 60 + 19);
+    setSeconds(0);
     clearPersistedCall();
     setResetNonce((n) => n + 1);
   }, []);
