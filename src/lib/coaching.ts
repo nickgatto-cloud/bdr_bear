@@ -242,8 +242,8 @@ export const COACHING: Record<string, CoachingCard> = {
     heading: "\"Don't trust AI\"",
     signal: "They fear losing control or accuracy on numbers they're accountable for.",
     talkTrack:
-      "Smart — you should be skeptical, your name is on the bid. Togal is a co-pilot, not autopilot: it detects and measures, you verify and adjust any region. Up to 98% accuracy on detection, and you stay in control of every number. Let me show you correcting a region live so you see how easy oversight is.",
-    tip: "Reframe AI as a verifiable co-pilot, not a black box.",
+      "Smart — you should be skeptical, your name's on the bid. Togal is a co-pilot, not autopilot: the AI does the first-pass detection and measuring, then you verify and adjust any region. And it's independently validated — a University of Kansas study clocked ~70% average time savings (up to ~76% on a plan set) at accuracy within ~5% of OST, and concluded AI works best paired with the estimator's judgment, not replacing it. You stay in control of every number — let me show you correcting a region live.",
+    tip: "Reframe AI as a verifiable co-pilot, backed by the independent KU study (~5% accuracy gap, ~70% faster).",
     fant: ["N"],
     vestt: ["E", "S"],
     keywords: ["trust ai", "don't trust", "dont trust", "accuracy", "accurate", "black box", "wrong"],
@@ -281,8 +281,8 @@ export const COACHING: Record<string, CoachingCard> = {
     heading: "\"Tried AI before\"",
     signal: "They were burned by 'AI' that was a buzzword on a manual tool.",
     talkTrack:
-      "What did you try, and where did it fall down? A lot of 'AI takeoff' is a label on a manual product. Togal was built by estimators and the detection is purpose-trained on construction drawings — plus it compares revisions automatically. Let me show you the difference on a plan that tripped up the last tool.",
-    tip: "Diagnose the prior failure, then differentiate on it.",
+      "What did you try, and where did it fall down? A lot of 'AI takeoff' is automation with an AI sticker — pull the label off and nothing changes. Togal is real computer vision, built by estimators and purpose-trained on construction drawings, and it's been independently studied: a University of Kansas paper found ~70% time savings at accuracy within ~5% of OST. The real test is a messy, live plan — let me run the one that tripped up the last tool.",
+    tip: "Diagnose the prior failure, separate real AI from AI-washing, then prove it on a messy plan.",
     fant: ["N"],
     vestt: ["V", "E", "S"],
     keywords: ["tried ai", "tried it before", "didn't work", "didnt work", "used ai", "already tried"],
@@ -294,7 +294,7 @@ export const COACHING: Record<string, CoachingCard> = {
     heading: "\"We have estimators\"",
     signal: "Fear that Togal replaces people, or that they're already covered.",
     talkTrack:
-      "Perfect — Togal makes them faster, it doesn't replace them. Your estimators stop tracing and spend time on strategy, scope, and review. Same team, more bids out the door, fewer late nights. Want to let one of them run a takeoff in the demo?",
+      "Perfect — Togal makes them faster, it doesn't replace them. Your estimators stop tracing and spend their time on strategy, scope, and review — which is exactly what the independent University of Kansas study concluded: AI works best paired with the estimator's judgment, not instead of it. Same team, more bids out the door, fewer late nights. Want one of them to run a takeoff in the demo?",
     tip: "Position as a force-multiplier for the estimators you already have.",
     fant: ["F", "N"],
     vestt: ["E", "T1"],
