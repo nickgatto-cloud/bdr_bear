@@ -6,6 +6,7 @@ import {
   VESTT,
   type TranscriptAnalysis,
 } from "@/lib/coaching";
+import HubSpotCalls from "@/components/tabs/HubSpotCalls";
 
 const ACCENT_BY_CATEGORY: Record<string, string> = {
   competitor: "var(--orange)",
@@ -80,6 +81,9 @@ export default function PostCallAnalysis({
           </span>
         </div>
       </div>
+
+      {/* pull the 20 most recent calls from HubSpot (auto-refreshes every 30s) */}
+      <HubSpotCalls onLoad={setText} />
 
       <div className="cc-label flex items-center gap-2">
         <ClipboardIcon size={13} /> PASTE CALL TRANSCRIPT
