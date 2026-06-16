@@ -583,6 +583,50 @@ function LiveCoach({
   const [coachingTab, setCoachingTab] = useState<"guidance" | "notes">(
     "guidance"
   );
+  const [copied, setCopied] = useState(false);
+
+  // assemble the notes as a plain-text block (for pasting into HubSpot)
+  const buildNotesText = () => {
+    const lines = buildNotesFields(activeChips).map((f) => `${f.label}: ${f.value}`);
+    lines.push(`Estimating team: ${estimatingTeam || "—"}`);
+    lines.push(`Estimators: ${estimators || "—"}`);
+    return lines.join("\n");
+  };
+
+  const copyNotes = async () => {
+    const text = buildNotesText();
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      // fallback for browsers / non-secure contexts without the clipboard API
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand("copy");
+      } catch {
+        /* nothing else we can do */
+      }
+      document.body.removeChild(ta);
+    }
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1600);
+  };
+
+  // selecting + copying inside the notes card should also yield plain text —
+  // never the styled card, which HubSpot would paste as a formatted block
+  const handleNotesCopy = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const text = buildNotesText();
+    e.clipboardData.setData("text/plain", text);
+    e.clipboardData.setData(
+      "text/html",
+      text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/\n/g, "<br>")
+    );
+  };
 
   return (
     <div className="h-full px-7 py-6 flex flex-col min-h-0 gap-5">
@@ -650,12 +694,39 @@ function LiveCoach({
             </div>
           </>
         ) : (
-          <div className="cc-panel cc-scroll flex-1 min-h-0 overflow-y-auto p-5">
-            <div
-              className="text-[11px] font-semibold tracking-[0.11em] uppercase mb-4"
-              style={{ color: "var(--green)" }}
-            >
-              Call notes
+          <div
+            className="cc-panel cc-scroll flex-1 min-h-0 overflow-y-auto p-5"
+            onCopy={handleNotesCopy}
+          >
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div
+                className="text-[11px] font-semibold tracking-[0.11em] uppercase"
+                style={{ color: "var(--green)" }}
+              >
+                Call notes
+              </div>
+              <button
+                className="cc-btn"
+                onClick={copyNotes}
+                title="Copy these notes to paste into HubSpot"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                  style={{ marginRight: 6, verticalAlign: -2 }}
+                >
+                  <rect x="8" y="2" width="8" height="4" rx="1" />
+                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                </svg>
+                {copied ? "Copied ✓" : "Copy for HubSpot"}
+              </button>
             </div>
             <div className="space-y-3 max-w-2xl">
               {buildNotesFields(activeChips).map((f, i) => (
