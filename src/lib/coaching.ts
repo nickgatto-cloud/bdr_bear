@@ -378,8 +378,8 @@ export const COACHING: Record<string, CoachingCard> = {
     heading: "Flooring",
     signal: "Area-driven: square footage per room and per floor type prices the job.",
     talkTrack:
-      "Flooring is pure area takeoff — Togal auto-detects every room boundary and gives you square footage in seconds, broken out by room so you can price carpet, LVT, tile, and hardwood separately. That replaces tracing rooms by hand, and the closets and transitions that usually get missed get counted.",
-    tip: "Demo room-by-room area auto-detection on a floor plan.",
+      "Flooring is pure area takeoff — Togal auto-detects every room boundary and gives you square footage in seconds, broken out by room so you can price carpet, LVT, tile, and hardwood separately, and the closets and transitions that usually get missed get counted. Proof: Total Flooring took off a 30-story high-rise in 48 hours — normally about two weeks of clicking — won the bid, and even caught an expensive plan error the GC had missed.",
+    tip: "Demo room-by-room area auto-detection; drop the Total Flooring proof — 30-story high-rise in 48 hours.",
     fant: ["F", "N"],
     vestt: ["S", "T1"],
     keywords: ["flooring", "floor", "carpet", "tile", "vinyl", "lvt", "hardwood", "square footage"],
@@ -417,8 +417,8 @@ export const COACHING: Record<string, CoachingCard> = {
     heading: "General Contractor",
     signal: "Multi-trade scope — breadth and revision churn are the pain.",
     talkTrack:
-      "GCs feel two pains: scoping a whole plan set fast, and keeping up with revisions. Show how quickly Togal scopes multiple trades and then compares revisions side-by-side so nothing slips between addenda. Breadth + revision comparison is the GC story.",
-    tip: "Demo multi-trade scoping + revision comparison.",
+      "GCs feel two pains: scoping a whole plan set fast, and keeping revisions aligned across a distributed team. Togal scopes multiple trades quickly, compares revisions side-by-side so nothing slips between addenda, and lets estimators work the same project in real time. Proof: Coastal Construction cut preconstruction effort 50–65% — 140–230 hours saved per project — and Consigli runs 80–100 estimators on Togal after 25 years on On-Screen Takeoff.",
+    tip: "Lead with Coastal (50–65% faster, 140–230 hrs/project) and Consigli (80–100 estimators, switched off OST).",
     fant: ["F", "N"],
     vestt: ["S", "T1"],
     keywords: ["general contractor", "gc", "self perform", "multi trade", "multi-trade"],
@@ -430,8 +430,8 @@ export const COACHING: Record<string, CoachingCard> = {
     heading: "Painting / Wallpaper",
     signal: "Wall and ceiling areas, broken out by room.",
     talkTrack:
-      "Show area auto-detect with room segmentation: Togal pulls wall and ceiling areas per room so you get paintable square footage without measuring every space by hand. That room-by-room breakout is exactly how painters bid.",
-    tip: "Demo wall/ceiling area by room with segmentation.",
+      "Painters bid by paintable area — Togal pulls wall and ceiling square footage per room so you're not measuring every space by hand, and its 3D view helps the field see exactly which walls to paint, cutting rework. Proof: Illusions Painting went from two-week takeoffs to getting them done 'in the blink of an eye,' with the whole team collaborating on the same takeoff in real time.",
+    tip: "Demo wall/ceiling area by room + the 3D view; proof: Illusions went from two-week takeoffs to hours.",
     fant: ["F", "N"],
     vestt: ["S", "T1"],
     keywords: ["painting", "paint", "wallpaper", "coatings", "wall covering"],
