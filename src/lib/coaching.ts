@@ -1170,3 +1170,76 @@ export function buildScenario(
     coaching: objection.coaching,
   };
 }
+
+/* ------------------------------------------------------------------ */
+/*  Knowledge base — grounds the Ask bar's free-form answers           */
+/*  (distilled from Togal's sales collateral + the data in this file)  */
+/* ------------------------------------------------------------------ */
+
+const KB_FACTS = `## Togal.AI — company & product
+- AI-powered takeoff & preconstruction platform, built by estimators/builders (born from a family construction business). "Builders before tech."
+- Cloud-based: auto-detects, measures, counts, and organizes quantities straight from construction drawings, and compares revisions side-by-side — minutes, not days.
+- Up to 98% detection accuracy; ~80% average takeoff time savings. Tagline: "Takeoff in minutes, not days."
+- US-owned, Florida-based. You keep control of your data. A co-pilot, not autopilot — the AI does the first pass, the estimator verifies every region.
+- Key features: AI auto-detect (areas/linear/counts), AI image search, Togal GPT, automatic scale detection, arc & circle cuts, advanced geometry, custom formulas, repeating groups, split/merge, search, 3D view, automated drawing/revision comparison, real-time cloud collaboration, iPad support, organized/grouped exports. Feeds downstream estimating (The EDGE, Sage).
+
+## Independent University of Kansas study (Marulanda et al., via Simplar Foundation), Togal vs On-Screen Takeoff
+- ~70% average takeoff time savings (≈75.6% on a fire-station plan set, ≈66.6% on a multistory hotel; up to ~76% on a single plan set). One floor plan: ~49 seconds of AI vs ~1h5m manual in OST.
+- Accuracy within ~5% of OST after quick human adjustments; bigger % gaps were only on tiny quantities.
+- Conclusion: AI works best paired with the estimator's judgment, not replacing it. The AI is weaker on low-quality/scanned drawings and can miss projections/legend items — so verification matters.
+- Clark Construction moved 170 estimators from OST to Togal.
+
+## Customer proof points
+- Total Flooring: took off a 30-story high-rise in 48 hours (normally ~2 weeks of clicking), won the bid, and caught an expensive plan error the GC had missed.
+- NC Painting: went from 19 bids/month on Bluebeam to 60 bids/month with the same team.
+- Illusions Painting: takeoffs went from two weeks to "the blink of an eye," with the whole team collaborating in real time; 3D view helps the field paint the right wall.
+- Select Painting: significantly faster estimates and more bids; 3D view reduces rework.
+- Consigli (≈$4B/yr GC, 80–100 estimators): switched from On-Screen Takeoff (used 25 years) for cloud-based real-time collaboration; values "better estimates, not just faster" (estimators spend time on judgment, not clicking).
+- Coastal Construction: 50–65% less total preconstruction effort, 140–230 hours saved per project, 60–70% faster ROM pricing, automated drawing comparison across design iterations.
+
+## "AI or BS" — how a real AI tool proves itself (use to coach skeptical buyers)
+- Real AI changes outcomes with measurable numbers (hours saved per bid, rework cut, takeoff speed, bid-rate lift) — not buzzwords.
+- No AI is 100% accurate out of the box; what matters is how easy cleanup is and that you verify. Beware "99% accurate" claims with no methodology.
+- Ask about data & security (SOC 1/SOC 2, offshore handling, co-mingled data), implementation reality, and whether removing the "AI" label would change the product (AI-washing).`;
+
+/** Compiled, plain-text knowledge base the Ask bar passes to the model. */
+export function buildKnowledgeBase(): string {
+  const cards = Object.values(COACHING)
+    .map(
+      (c) =>
+        `• ${c.heading} [${c.category} / ${c.tag}]\n  Signal: ${
+          c.signal ?? "—"
+        }\n  Talk track: ${c.talkTrack}\n  Tip: ${c.tip ?? "—"}`
+    )
+    .join("\n");
+  const comps = Object.values(COMPARISONS)
+    .map(
+      (c) =>
+        `Togal vs ${c.them}${c.proof ? ` — ${c.proof}` : ""}\n` +
+        c.rows
+          .map(
+            (r) =>
+              `  - ${r.feature}: Togal ${r.togal ? "yes" : "no"} / ${c.them} ${
+                r.them ? "yes" : "no"
+              }`
+          )
+          .join("\n")
+    )
+    .join("\n");
+  const frameworks =
+    `FANT (qualify): ${FANT.map((f) => `${f.label}=${f.full} (${f.hint})`).join(
+      "; "
+    )}\n` +
+    `VESTT (call motion): ${VESTT.map(
+      (v) => `${v.label}=${v.full} (${v.hint})`
+    ).join("; ")}`;
+  return [
+    KB_FACTS,
+    "## Battlecards & talk tracks",
+    cards,
+    "## Competitor comparisons",
+    comps,
+    "## Frameworks",
+    frameworks,
+  ].join("\n\n");
+}

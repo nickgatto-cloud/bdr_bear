@@ -324,13 +324,6 @@ export default function CallCoach() {
     [applyCardToFrameworks]
   );
 
-  const pushBlock = useCallback(
-    (block: GuidanceBlock, accent: GuidanceEntry["accent"] = "green") => {
-      setGuidance((g) => [{ key: guidanceKey.current++, accent, ...block }, ...g]);
-    },
-    []
-  );
-
   const handleChip = useCallback(
     (chip: Chip) => {
       const isActive = activeChips.has(chip.id);
@@ -365,33 +358,81 @@ export default function CallCoach() {
     [activeChips, pushCard]
   );
 
-  // type what you heard → log to transcript + auto-tag the matching chip
+  const [asking, setAsking] = useState(false);
+
+  // free-form Q&A grounded in the Togal knowledge base (server-side Claude)
+  const askAI = useCallback(async (question: string) => {
+    setAsking(true);
+    const key = guidanceKey.current++;
+    // optimistic "thinking" card, replaced in place when the answer returns
+    setGuidance((g) => [
+      {
+        key,
+        accent: "denim",
+        tag: "Answer",
+        heading: question.length > 70 ? question.slice(0, 68) + "…" : question,
+        body: ["Thinking…"],
+      },
+      ...g,
+    ]);
+    try {
+      const res = await fetch("/api/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question }),
+      });
+      const data = await res.json();
+      const ok = res.ok && !data.error && typeof data.answer === "string";
+      setGuidance((g) =>
+        g.map((e) =>
+          e.key === key
+            ? ok
+              ? { ...e, reply: data.answer as string, body: [] }
+              : { ...e, body: [data.error ?? "Couldn't get an answer."] }
+            : e
+        )
+      );
+    } catch {
+      setGuidance((g) =>
+        g.map((e) =>
+          e.key === key
+            ? { ...e, body: ["Network error — couldn't reach the server."] }
+            : e
+        )
+      );
+    } finally {
+      setAsking(false);
+    }
+  }, []);
+
+  // analyze bar: tag chips for heard objections, OR answer free-form questions
   const handleAnalyze = useCallback(() => {
     const text = draft.trim();
-    if (!text) return;
-    setTranscript((t) => [
-      ...t,
-      { id: nextLineId.current++, speaker: "PROSPECT", text },
-    ]);
+    if (!text || asking) return;
+    setDraft("");
     const card = matchUtterance(text);
+    const isQuestion =
+      /\?\s*$/.test(text) ||
+      /^(what|how|why|when|who|which|where|does|do|can|is|are|should|would|could|will|tell me|explain|give me|help|compare)\b/i.test(
+        text
+      );
+    // surface the matching battlecard / comparison either way
     if (card) {
       setActiveChips((prev) => new Set(prev).add(card.id));
       pushCard(card, card.id);
-    } else {
-      pushBlock(
-        {
-          tag: "Listen",
-          heading: "No objection pattern detected",
-          body: [
-            `Logged to transcript: "${text}"`,
-            `Keep them talking — ask an open question to surface the real driver, then tap the closest chip for a battlecard.`,
-          ],
-        },
-        "neutral"
-      );
     }
-    setDraft("");
-  }, [draft, pushCard, pushBlock]);
+    // log heard prospect lines to the transcript (questions aren't prospect speech)
+    if (!isQuestion) {
+      setTranscript((t) => [
+        ...t,
+        { id: nextLineId.current++, speaker: "PROSPECT", text },
+      ]);
+    }
+    // answer free-form questions, or anything we couldn't map to a chip
+    if (isQuestion || !card) {
+      askAI(text);
+    }
+  }, [draft, asking, pushCard, askAI]);
 
   const handleAction = useCallback(
     (actionId: string) => {
@@ -527,6 +568,7 @@ export default function CallCoach() {
               draft={draft}
               setDraft={setDraft}
               onAnalyze={handleAnalyze}
+              asking={asking}
               estimatingTeam={estimatingTeam}
               setEstimatingTeam={setEstimatingTeam}
               estimators={estimators}
@@ -567,6 +609,7 @@ function LiveCoach({
   draft,
   setDraft,
   onAnalyze,
+  asking,
   estimatingTeam,
   setEstimatingTeam,
   estimators,
@@ -581,6 +624,7 @@ function LiveCoach({
   draft: string;
   setDraft: (s: string) => void;
   onAnalyze: () => void;
+  asking: boolean;
   estimatingTeam: string;
   setEstimatingTeam: (v: string) => void;
   estimators: string;
@@ -870,16 +914,22 @@ function LiveCoach({
             onKeyDown={(e) => {
               if (e.key === "Enter") onAnalyze();
             }}
-            placeholder="Type what you heard → get a card…"
+            placeholder="Type what you heard, or ask anything…"
             className="cc-field flex-1 text-[16px]"
+            disabled={asking}
           />
-          <button className="btn-analyze" onClick={onAnalyze}>
-            Analyze <span className="opacity-60">↗</span>
+          <button
+            className="btn-analyze"
+            onClick={onAnalyze}
+            disabled={asking || !draft.trim()}
+          >
+            {asking ? "Thinking…" : "Analyze"} <span className="opacity-60">↗</span>
           </button>
         </div>
         <p className="mt-2 text-[12px] text-[var(--fg-dim)]">
-          Matches a battlecard and tags the chip automatically — and logs to the
-          call transcript you&apos;ll find under Role Plays → Post-call analysis.
+          Tags the matching chip for objections, and answers any question from
+          Togal&apos;s playbook, studies, and case studies. Heard lines also log
+          to the transcript under Role Plays → Post-call analysis.
         </p>
       </section>
     </div>
