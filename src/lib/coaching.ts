@@ -64,7 +64,8 @@ export const VESTT: { key: VesttKey; label: string; full: string; hint: string }
 export const CHIPS: Chip[] = [
   { id: "beam-ai", label: "Beam AI", category: "competitor" },
   { id: "bluebeam", label: "Bluebeam", category: "competitor" },
-  { id: "planswift", label: "PlanSwift/OST", category: "competitor" },
+  { id: "planswift", label: "PlanSwift", category: "competitor" },
+  { id: "ost", label: "On-Screen (OST)", category: "competitor" },
   { id: "procore", label: "Procore/Autodesk", category: "competitor" },
   { id: "stack", label: "STACK", category: "competitor" },
   { id: "edge-sage", label: "Edge/Sage", category: "competitor" },
@@ -131,14 +132,27 @@ export const COACHING: Record<string, CoachingCard> = {
     id: "planswift",
     tag: "Battlecard",
     category: "competitor",
-    heading: "PlanSwift / On-Screen Takeoff",
+    heading: "PlanSwift",
     signal: "They run a legacy click-by-click manual takeoff tool.",
     talkTrack:
-      "PlanSwift and OST work — but every count and area is a manual click. Togal does that detection automatically, then you verify. The same takeoff that's an afternoon of clicking becomes minutes. Ask: 'How long does a typical plan set take you in PlanSwift today?' — then show the same one in Togal.",
+      "PlanSwift works — but every count and area is a manual click. Togal does that detection automatically, then you verify. The same takeoff that's an afternoon of clicking becomes minutes. Ask: 'How long does a typical plan set take you in PlanSwift today?' — then show the same one in Togal.",
     tip: "Quantify their current click-time, then beat it live.",
     fant: ["N", "T"],
     vestt: ["V", "S"],
-    keywords: ["planswift", "plan swift", "on-screen", "on screen", "ost", "osT"],
+    keywords: ["planswift", "plan swift"],
+  },
+  ost: {
+    id: "ost",
+    tag: "Battlecard",
+    category: "competitor",
+    heading: "On-Screen Takeoff (OST)",
+    signal: "They run On-Screen Takeoff — legacy click-by-click manual measuring.",
+    talkTrack:
+      "On-Screen Takeoff is the industry workhorse, but it's still manual — every count, length, and area is a click. Togal auto-detects the same scope in minutes and you just verify it. Ask: 'How long does a typical plan set take your team in OST?' — then run the same set live in Togal.",
+    tip: "Anchor on their click-time per plan set, then show it done in minutes.",
+    fant: ["N", "T"],
+    vestt: ["V", "S"],
+    keywords: ["ost", "on-screen", "on screen", "on-screen takeoff", "onscreen"],
   },
   procore: {
     id: "procore",
@@ -590,7 +604,7 @@ export function buildAction(action: string, ctx: ActionContext): GuidanceBlock {
             heading: "No competitor detected yet",
             body: [
               `Ask the discovery question first: "What are you using for takeoffs today?"`,
-              `Then tap the competitor's chip — Bluebeam, STACK, PlanSwift/OST, Procore/Autodesk, Beam AI, or Edge/Sage — for the matching battlecard.`,
+              `Then tap the competitor's chip — Bluebeam, STACK, PlanSwift, On-Screen Takeoff, Procore/Autodesk, Beam AI, or Edge/Sage — for the matching battlecard.`,
             ],
           };
 
@@ -784,7 +798,11 @@ export const COMPETITOR_INTEL: Record<
   },
   planswift: {
     level: "medium",
-    what: "Legacy on-screen, click-by-click manual takeoff.",
+    what: "Legacy click-by-click manual takeoff.",
+  },
+  ost: {
+    level: "medium",
+    what: "On-Screen Takeoff — legacy click-by-click manual takeoff.",
   },
   procore: {
     level: "medium",
@@ -808,6 +826,7 @@ export const PRACTICE_LINES: Record<string, string> = {
   bluebeam: "We use Bluebeam in every workflow, so we're pretty set.",
   stack: "We're already on STACK for our takeoffs.",
   planswift: "We've used PlanSwift for years — it works fine.",
+  ost: "We do all our takeoffs in On-Screen Takeoff.",
   procore: "Everything runs through Procore for us.",
   "beam-ai": "We're already taking a look at Beam AI.",
   "edge-sage": "Our estimating all lives in The EDGE.",
