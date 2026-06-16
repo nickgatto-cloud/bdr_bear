@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   SCENARIO_PROSPECT_TYPES,
   SCENARIO_OBJECTIONS,
@@ -7,6 +7,35 @@ import {
   type Scenario,
   type ScenarioObjection,
 } from "@/lib/coaching";
+
+/* ---- Web Speech API (browser speech-to-text) — minimal local types ---- */
+interface SpeechAlt {
+  transcript: string;
+}
+interface SpeechResult {
+  readonly isFinal: boolean;
+  readonly length: number;
+  [index: number]: SpeechAlt;
+}
+interface SpeechResultList {
+  readonly length: number;
+  [index: number]: SpeechResult;
+}
+interface SpeechRecognitionEventLike {
+  readonly resultIndex: number;
+  readonly results: SpeechResultList;
+}
+interface SpeechRecognitionLike {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  onresult: ((e: SpeechRecognitionEventLike) => void) | null;
+  onend: (() => void) | null;
+  onerror: (() => void) | null;
+}
+type SpeechRecognitionCtor = new () => SpeechRecognitionLike;
 
 const DIFFICULTIES: Difficulty[] = ["Easy", "Challenging", "Hard"];
 
@@ -27,6 +56,15 @@ export default function PracticeScenario() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // ---- voice (push-to-talk via Space bar / mic button) ----
+  const [listening, setListening] = useState(false);
+  const [voiceSupported, setVoiceSupported] = useState(true);
+  const recRef = useRef<SpeechRecognitionLike | null>(null);
+  const listeningRef = useRef(false);
+  const baseRef = useRef(""); // text already in the box when dictation started
+  const finalRef = useRef(""); // accumulated finalized speech this session
+  const inputRef = useRef("");
+
   const threadRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     threadRef.current?.scrollTo({
@@ -34,6 +72,115 @@ export default function PracticeScenario() {
       behavior: "smooth",
     });
   }, [thread, loading]);
+
+  useEffect(() => {
+    inputRef.current = input;
+  }, [input]);
+
+  const stopListening = useCallback(() => {
+    listeningRef.current = false;
+    setListening(false);
+    try {
+      recRef.current?.stop();
+    } catch {
+      /* already stopped */
+    }
+  }, []);
+
+  const startListening = useCallback(() => {
+    if (!recRef.current || listeningRef.current) return;
+    const existing = inputRef.current.trim();
+    baseRef.current = existing ? existing + " " : "";
+    finalRef.current = "";
+    listeningRef.current = true;
+    setListening(true);
+    try {
+      recRef.current.start();
+    } catch {
+      listeningRef.current = false;
+      setListening(false);
+    }
+  }, []);
+
+  const toggleListening = useCallback(() => {
+    if (listeningRef.current) stopListening();
+    else startListening();
+  }, [startListening, stopListening]);
+
+  // create the browser speech-recognition engine once
+  useEffect(() => {
+    const w = window as unknown as {
+      SpeechRecognition?: SpeechRecognitionCtor;
+      webkitSpeechRecognition?: SpeechRecognitionCtor;
+    };
+    const Ctor = w.SpeechRecognition ?? w.webkitSpeechRecognition;
+    if (!Ctor) {
+      setVoiceSupported(false);
+      return;
+    }
+    const rec = new Ctor();
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.lang = "en-US";
+    rec.onresult = (e) => {
+      let interim = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const seg = e.results[i][0].transcript;
+        if (e.results[i].isFinal) finalRef.current += seg + " ";
+        else interim += seg;
+      }
+      setInput(
+        (baseRef.current + finalRef.current + interim)
+          .replace(/\s+/g, " ")
+          .replace(/^\s+/, "")
+      );
+    };
+    rec.onend = () => {
+      listeningRef.current = false;
+      setListening(false);
+    };
+    rec.onerror = () => {
+      listeningRef.current = false;
+      setListening(false);
+    };
+    recRef.current = rec;
+    return () => {
+      try {
+        rec.stop();
+      } catch {
+        /* noop */
+      }
+    };
+  }, []);
+
+  // hold Space to talk while a scenario is live and you're not typing in a field
+  useEffect(() => {
+    if (!scenario || !voiceSupported) return;
+    const isField = (el: Element | null) => {
+      const t = el?.tagName;
+      return t === "INPUT" || t === "TEXTAREA" || t === "SELECT";
+    };
+    const down = (e: KeyboardEvent) => {
+      if (e.code !== "Space" || e.repeat) return;
+      if (isField(document.activeElement)) return;
+      e.preventDefault();
+      const ae = document.activeElement;
+      if (ae instanceof HTMLElement && ae.tagName === "BUTTON") ae.blur();
+      startListening();
+    };
+    const up = (e: KeyboardEvent) => {
+      if (e.code !== "Space") return;
+      if (isField(document.activeElement)) return;
+      e.preventDefault();
+      stopListening();
+    };
+    window.addEventListener("keydown", down);
+    window.addEventListener("keyup", up);
+    return () => {
+      window.removeEventListener("keydown", down);
+      window.removeEventListener("keyup", up);
+    };
+  }, [scenario, voiceSupported, startListening, stopListening]);
 
   const start = () => {
     const obj =
@@ -48,6 +195,7 @@ export default function PracticeScenario() {
   };
 
   const reset = () => {
+    stopListening();
     setScenario(null);
     setObjection(null);
     setThread([]);
@@ -58,6 +206,7 @@ export default function PracticeScenario() {
   const send = async () => {
     const text = input.trim();
     if (!text || loading || !scenario) return;
+    stopListening();
 
     const newThread: Turn[] = [...thread, { role: "rep", text }];
     setThread(newThread);
@@ -218,27 +367,94 @@ export default function PracticeScenario() {
                 )}
               </div>
 
-              <div className="px-4 py-3 border-t border-[var(--border)] flex gap-3">
-                <input
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      send();
+              <div className="px-4 py-3 border-t border-[var(--border)]">
+                <div className="flex gap-3">
+                  <input
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        send();
+                      }
+                    }}
+                    placeholder={
+                      listening
+                        ? "Listening… speak now"
+                        : "Type your response — or hold Space to talk…"
                     }
-                  }}
-                  placeholder="Type your response to the prospect…"
-                  className="cc-field flex-1"
-                  disabled={loading}
-                />
-                <button
-                  className="btn-primary"
-                  onClick={send}
-                  disabled={loading || !input.trim()}
-                >
-                  Send ↗
-                </button>
+                    className="cc-field flex-1"
+                    style={listening ? { borderColor: "var(--green)" } : undefined}
+                    disabled={loading}
+                  />
+                  {voiceSupported && (
+                    <button
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={(e) => {
+                        e.currentTarget.blur();
+                        toggleListening();
+                      }}
+                      className="cc-btn"
+                      title="Hold Space to talk, or click to toggle the mic"
+                      aria-label={listening ? "Stop voice input" : "Start voice input"}
+                      style={
+                        listening
+                          ? { borderColor: "var(--green)", color: "var(--green)" }
+                          : undefined
+                      }
+                    >
+                      <MicIcon active={listening} />
+                    </button>
+                  )}
+                  <button
+                    className="btn-primary"
+                    onClick={send}
+                    disabled={loading || !input.trim()}
+                  >
+                    Send ↗
+                  </button>
+                </div>
+
+                <div className="mt-2 text-[12px] text-[var(--fg-dim)] flex items-center gap-2 min-h-[16px]">
+                  {listening ? (
+                    <span
+                      className="flex items-center gap-1.5"
+                      style={{ color: "var(--green)" }}
+                    >
+                      <span
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: "50%",
+                          background: "var(--green)",
+                          display: "inline-block",
+                        }}
+                      />
+                      Listening — release Space to stop, then Send
+                    </span>
+                  ) : voiceSupported ? (
+                    <span>
+                      Hold{" "}
+                      <span
+                        style={{
+                          padding: "1px 6px",
+                          borderRadius: 4,
+                          border: "1px solid var(--border-strong)",
+                          background: "var(--surface)",
+                        }}
+                      >
+                        Space
+                      </span>{" "}
+                      to talk (when not typing), or click the mic. Review, then Send.
+                    </span>
+                  ) : (
+                    <span>
+                      Voice input isn&apos;t supported in this browser — try Chrome or
+                      Edge.
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -306,6 +522,26 @@ function Bubble({ turn }: { turn: Turn }) {
         <p className="text-[var(--fg)] text-[15px] leading-relaxed">{turn.text}</p>
       </div>
     </div>
+  );
+}
+
+function MicIcon({ active }: { active?: boolean }) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill={active ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="9" y="2" width="6" height="11" rx="3" />
+      <path d="M5 10a7 7 0 0 0 14 0" fill="none" />
+      <line x1="12" y1="19" x2="12" y2="22" />
+    </svg>
   );
 }
 
