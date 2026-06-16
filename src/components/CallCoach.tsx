@@ -48,7 +48,7 @@ const NAV: {
   icon: ReactNode;
   danger?: boolean;
 }[] = [
-  { id: "live", label: "Live Coach", desc: "Real-time objection handling and coaching", icon: <HeadsetIcon /> },
+  { id: "live", label: "The Bear's Den", desc: "Real-time objection handling and coaching", icon: <HeadsetIcon /> },
   { id: "book-demo", label: "Book Demo", desc: "Route the prospect to the right BDR", icon: <CalendarIcon /> },
   { id: "fant", label: "FANT Qualify", desc: "Fit · Authority · Need · Timing scorecard", icon: <TargetIcon /> },
   { id: "script", label: "Call Script", desc: "The VESTT motion, stage by stage", icon: <ScriptIcon /> },
