@@ -106,6 +106,7 @@ export interface ComparisonRow {
   feature: string;
   togal: boolean;
   them: boolean;
+  section?: string; // optional grouping header (e.g. "AI & Search")
 }
 export interface Comparison {
   them: string; // short competitor label for the column header
@@ -118,38 +119,48 @@ export const COMPARISONS: Record<string, Comparison> = {
     them: "Bluebeam",
     proof: "NC Painting went 19 → 60 bids/month with the same team.",
     rows: [
-      { feature: "AI auto-detect & count", togal: true, them: false },
-      { feature: "AI image search", togal: true, them: false },
-      { feature: "Togal GPT", togal: true, them: false },
-      { feature: "Cloud-based", togal: true, them: false },
-      { feature: "Arc-area, split & merge tools", togal: true, them: false },
-      { feature: "AI included in one fee", togal: true, them: false },
-      { feature: "PDF markup / RFIs / submittals", togal: false, them: true },
+      { section: "AI & Search", feature: "AI Image Search", togal: true, them: false },
+      { section: "AI & Search", feature: "Text Search", togal: true, them: true },
+      { section: "AI & Search", feature: "Togal GPT", togal: true, them: false },
+      { section: "Functionality", feature: "Cloud-based", togal: true, them: false },
+      { section: "Functionality", feature: "Curve Takeoff on Linears (Arc Line)", togal: true, them: true },
+      { section: "Functionality", feature: "Curve Takeoffs on Areas (Arc Area)", togal: true, them: false },
+      { section: "Functionality", feature: "Split Tool", togal: true, them: false },
+      { section: "Functionality", feature: "Merge Tool", togal: true, them: false },
+      { section: "Functionality", feature: "Real-time Internal Collaboration", togal: true, them: false },
+      { section: "Functionality", feature: "Real-time External Collaboration", togal: true, them: false },
     ],
   },
   planswift: {
     them: "PlanSwift",
     proof: "A former PlanSwift customer tripled monthly bids after switching.",
     rows: [
-      { feature: "AI auto-tracing", togal: true, them: false },
-      { feature: "Cloud-based", togal: true, them: false },
-      { feature: "Uncapped real-time collaboration", togal: true, them: false },
-      { feature: "Continuous updates & support", togal: true, them: false },
-      { feature: "10–20× faster on floor plans", togal: true, them: false },
-      { feature: "QuickBooks export", togal: false, them: true },
+      { section: "AI & Search", feature: "AI Image Search", togal: true, them: false },
+      { section: "AI & Search", feature: "Text Search", togal: true, them: false },
+      { section: "AI & Search", feature: "Togal GPT", togal: true, them: false },
+      { section: "Functionality", feature: "Cloud-based", togal: true, them: false },
+      { section: "Functionality", feature: "Curve Takeoff on Linears (Arc Line)", togal: true, them: true },
+      { section: "Functionality", feature: "Curve Takeoffs on Areas (Arc Area)", togal: true, them: true },
+      { section: "Functionality", feature: "Split Tool", togal: true, them: false },
+      { section: "Functionality", feature: "Merge Tool", togal: true, them: true },
+      { section: "Functionality", feature: "Real-time Internal Collaboration", togal: true, them: false },
+      { section: "Functionality", feature: "Real-time External Collaboration", togal: true, them: false },
     ],
   },
   ost: {
     them: "OST",
     proof: "KU study: ~70% faster, ~5% accuracy gap; Clark moved 170 estimators.",
     rows: [
-      { feature: "AI as core product (not beta)", togal: true, them: false },
-      { feature: "Arc & circle cuts", togal: true, them: false },
-      { feature: "Advanced geometry tools", togal: true, them: false },
-      { feature: "Custom formulas", togal: true, them: false },
-      { feature: "All features in one fee", togal: true, them: false },
-      { feature: "Real-time cloud collaboration", togal: true, them: false },
-      { feature: "30+ years in market", togal: false, them: true },
+      { section: "AI & Search", feature: "AI Image Search", togal: true, them: false },
+      { section: "AI & Search", feature: "Text Search", togal: true, them: false },
+      { section: "AI & Search", feature: "Togal GPT", togal: true, them: false },
+      { section: "Functionality", feature: "Cloud-based", togal: true, them: false },
+      { section: "Functionality", feature: "Curve Takeoff on Linears (Arc Line)", togal: true, them: false },
+      { section: "Functionality", feature: "Curve Takeoffs on Areas (Arc Area)", togal: true, them: false },
+      { section: "Functionality", feature: "Split Tool", togal: true, them: false },
+      { section: "Functionality", feature: "Merge Tool", togal: true, them: false },
+      { section: "Functionality", feature: "Real-time Internal Collaboration", togal: true, them: false },
+      { section: "Functionality", feature: "Real-time External Collaboration", togal: true, them: false },
     ],
   },
   stack: {

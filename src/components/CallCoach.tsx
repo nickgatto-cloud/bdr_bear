@@ -1118,23 +1118,35 @@ function ComparisonCard({
         </span>
       </div>
 
-      {comparison.rows.map((r, i) => (
-        <div
-          key={i}
-          className="grid items-center py-[6px] border-b border-[var(--border)]"
-          style={cols}
-        >
-          <span className="text-[13px] text-[var(--fg-muted)] leading-snug pr-2">
-            {r.feature}
-          </span>
-          <span className="flex justify-center">
-            <Mark on={r.togal} />
-          </span>
-          <span className="flex justify-center">
-            <Mark on={r.them} />
-          </span>
-        </div>
-      ))}
+      {comparison.rows.map((r, i) => {
+        const showSection = r.section && r.section !== comparison.rows[i - 1]?.section;
+        return (
+          <div key={i}>
+            {showSection && (
+              <div
+                className="text-[10px] font-semibold tracking-[0.1em] uppercase mt-2.5 mb-1"
+                style={{ color: "var(--green)" }}
+              >
+                {r.section}
+              </div>
+            )}
+            <div
+              className="grid items-center py-[6px] border-b border-[var(--border)]"
+              style={cols}
+            >
+              <span className="text-[13px] text-[var(--fg-muted)] leading-snug pr-2">
+                {r.feature}
+              </span>
+              <span className="flex justify-center">
+                <Mark on={r.togal} />
+              </span>
+              <span className="flex justify-center">
+                <Mark on={r.them} />
+              </span>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
