@@ -637,6 +637,7 @@ function LiveCoach({
   );
   const [copied, setCopied] = useState(false);
   const [feedH, setFeedH] = useState<number | null>(null);
+  const chipsRef = useRef<HTMLElement>(null);
 
   // assemble the notes as a plain-text block (for pasting into HubSpot)
   const buildNotesText = () => {
@@ -686,8 +687,12 @@ function LiveCoach({
     e.preventDefault();
     const startY = e.clientY;
     const startH = guidanceRef.current?.offsetHeight ?? 400;
+    // cap the height so the panel can never grow over the chip rail below it
+    const wrapperTop = guidanceRef.current?.getBoundingClientRect().top ?? 0;
+    const chipsH = chipsRef.current?.offsetHeight ?? 0;
+    const maxH = Math.max(240, window.innerHeight - wrapperTop - chipsH - 48);
     const move = (ev: PointerEvent) =>
-      setFeedH(Math.max(240, startH + (ev.clientY - startY)));
+      setFeedH(Math.min(maxH, Math.max(240, startH + (ev.clientY - startY))));
     const up = () => {
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
@@ -699,7 +704,7 @@ function LiveCoach({
   const sectionFill = coachingTab === "notes" || feedH === null;
 
   return (
-    <div className="h-full px-7 py-6 flex flex-col min-h-0 gap-5 overflow-y-auto cc-scroll">
+    <div className="h-full px-7 py-6 flex flex-col min-h-0 gap-5">
       {/* ---- top: coaching + notes (full width) ---- */}
       <section className={`flex flex-col min-h-0 ${sectionFill ? "flex-1" : ""}`}>
         <div className="flex items-center justify-between border-b border-[var(--border)] mb-3">
@@ -892,7 +897,7 @@ function LiveCoach({
       </section>
 
       {/* ---- bottom: tag what you hear (full width) ---- */}
-      <section className="flex-none">
+      <section ref={chipsRef} className="flex-none">
         <SectionLabel>Tag what you hear</SectionLabel>
         <div className="flex flex-wrap gap-2">
           {CHIPS.map((chip) => (
