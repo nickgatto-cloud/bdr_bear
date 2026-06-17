@@ -95,4 +95,4 @@ export const TRADE_SOFTWARE: TradeGroup[] = [
 ];
 
 export const DEFAULT_SOFTWARE_NOTE =
-  "Incumbent takeoff/estimating tool for this trade. Ask what it does well and where it slows them down, then offer a live head-to-head — Togal handles the takeoff and feeds whatever they estimate in.";
+  "Incumbent takeoff/estimating tool for this trade.";
