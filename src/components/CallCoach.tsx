@@ -1069,6 +1069,18 @@ function Mark({ on }: { on: boolean }) {
   );
 }
 
+/** A comparison cell: a yes/no mark, or a short text qualifier. */
+function CompCell({ value }: { value: boolean | string }) {
+  if (typeof value === "string") {
+    return (
+      <span className="text-[10px] text-[var(--fg-dim)] leading-tight text-center px-1">
+        {value}
+      </span>
+    );
+  }
+  return <Mark on={value} />;
+}
+
 function ComparisonCard({
   comparison,
   isNew,
@@ -1077,7 +1089,13 @@ function ComparisonCard({
   isNew?: boolean;
 }) {
   const accent = ACCENT_HEX.orange;
-  const cols = { gridTemplateColumns: "1fr 48px 64px" } as const;
+  // widen the value columns when any cell carries a text qualifier
+  const hasText = comparison.rows.some(
+    (r) => typeof r.togal === "string" || typeof r.them === "string"
+  );
+  const cols = {
+    gridTemplateColumns: hasText ? "1fr 44px 104px" : "1fr 48px 64px",
+  } as const;
   return (
     <div
       className="cc-enter rounded-lg bg-[var(--surface)] border border-[var(--border)] px-4 py-3"
@@ -1138,10 +1156,10 @@ function ComparisonCard({
                 {r.feature}
               </span>
               <span className="flex justify-center">
-                <Mark on={r.togal} />
+                <CompCell value={r.togal} />
               </span>
-              <span className="flex justify-center">
-                <Mark on={r.them} />
+              <span className="flex justify-center text-center">
+                <CompCell value={r.them} />
               </span>
             </div>
           </div>

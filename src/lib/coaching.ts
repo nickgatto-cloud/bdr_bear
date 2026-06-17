@@ -104,8 +104,9 @@ export const CHIPS: Chip[] = [
 
 export interface ComparisonRow {
   feature: string;
-  togal: boolean;
-  them: boolean;
+  // true = yes (check), false = no (cross), or a short qualifier string
+  togal: boolean | string;
+  them: boolean | string;
   section?: string; // optional grouping header (e.g. "AI & Search")
 }
 export interface Comparison {
@@ -190,11 +191,24 @@ export const COMPARISONS: Record<string, Comparison> = {
     them: "Kreo",
     proof: "Kreo is foreign-owned with no manual fallback when the AI stalls.",
     rows: [
-      { feature: "Manual fallback when AI gets stuck", togal: true, them: false },
-      { feature: "US-owned (Florida-based)", togal: true, them: false },
-      { feature: "All features in one fee", togal: true, them: false },
-      { feature: "Unlimited viewer-only accounts", togal: true, them: false },
-      { feature: "CAD / DWG / DXF import", togal: false, them: true },
+      { feature: "Auto-naming & project organization", togal: true, them: true },
+      {
+        feature: "Automated AI takeoff button",
+        togal: true,
+        them: "Auto Measure API in beta phase",
+      },
+      { feature: "Manual tools for advanced takeoff", togal: true, them: false },
+      {
+        feature: "Cloud-based collaboration with permission levels",
+        togal: true,
+        them: true,
+      },
+      {
+        feature: "AI search of image, text & pattern in one click",
+        togal: true,
+        them: "Only Auto Count — no image or pattern search",
+      },
+      { feature: "Native GPT across project plans", togal: true, them: true },
     ],
   },
   procore: {
@@ -1223,6 +1237,8 @@ export function buildKnowledgeBase(): string {
         }\n  Talk track: ${c.talkTrack}\n  Tip: ${c.tip ?? "—"}`
     )
     .join("\n");
+  const cell = (v: boolean | string) =>
+    typeof v === "string" ? v : v ? "yes" : "no";
   const comps = Object.values(COMPARISONS)
     .map(
       (c) =>
@@ -1230,9 +1246,9 @@ export function buildKnowledgeBase(): string {
         c.rows
           .map(
             (r) =>
-              `  - ${r.feature}: Togal ${r.togal ? "yes" : "no"} / ${c.them} ${
-                r.them ? "yes" : "no"
-              }`
+              `  - ${r.feature}: Togal ${cell(r.togal)} / ${c.them} ${cell(
+                r.them
+              )}`
           )
           .join("\n")
     )
