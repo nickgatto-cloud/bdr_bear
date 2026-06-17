@@ -149,10 +149,14 @@ export default function CallCoach() {
   const [resetNonce, setResetNonce] = useState(0);
 
   const [seconds, setSeconds] = useState(5 * 60 + 19);
+  // the call clock only ticks while running; Reset pauses it at 0 until the
+  // first chip is tagged or the prospect's first line is analyzed
+  const [running, setRunning] = useState(true);
   useEffect(() => {
+    if (!running) return;
     const t = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(t);
-  }, []);
+  }, [running]);
 
   const [activeChips, setActiveChips] = useState<Set<string>>(new Set());
   const [activeActions, setActiveActions] = useState<Set<string>>(new Set());
@@ -215,6 +219,7 @@ export default function CallCoach() {
           setEstimatingTeam(s.estimatingTeam);
         if (typeof s.estimators === "string") setEstimators(s.estimators);
         if (typeof s.seconds === "number") setSeconds(s.seconds);
+        if (typeof s.running === "boolean") setRunning(s.running);
         if (typeof s.tab === "string") setTab(s.tab);
       }
     } catch {
@@ -239,6 +244,7 @@ export default function CallCoach() {
           vestt,
           guidance,
           seconds,
+          running,
           tab,
         })
       );
@@ -256,6 +262,7 @@ export default function CallCoach() {
     vestt,
     guidance,
     seconds,
+    running,
     tab,
   ]);
 
@@ -338,6 +345,7 @@ export default function CallCoach() {
         setGuidance((g) => g.filter((e) => e.sourceChipId !== chip.id));
         setTranscript((t) => t.filter((l) => l.chipId !== chip.id));
       } else {
+        setRunning(true); // first chip tagged starts the call clock
         const card = COACHING[chip.id];
         if (card) pushCard(card, chip.id);
         // tagging something the prospect said also logs it to the transcript
@@ -423,6 +431,7 @@ export default function CallCoach() {
     }
     // log heard prospect lines to the transcript (questions aren't prospect speech)
     if (!isQuestion) {
+      setRunning(true); // the prospect answering starts the call clock
       setTranscript((t) => [
         ...t,
         { id: nextLineId.current++, speaker: "PROSPECT", text },
@@ -478,6 +487,7 @@ export default function CallCoach() {
     setVestt({ V: false, E: false, S: false, T1: false, T2: false });
     setGuidance([]);
     setSeconds(0);
+    setRunning(false); // hold the clock at 0 until the call starts again
     clearPersistedCall();
     setResetNonce((n) => n + 1);
   }, []);
