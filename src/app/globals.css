@@ -389,6 +389,10 @@ body {
   border-color: var(--border-strong);
   color: var(--fg-muted);
 }
+.chip[data-variant="sector"] {
+  border-color: rgba(106, 163, 255, 0.5);
+  color: #a9c8ff;
+}
 .chip.is-active {
   color: var(--fg);
 }
@@ -421,6 +425,11 @@ body {
   background: var(--surface-2);
   border-color: #5a645f;
   color: var(--fg);
+}
+.chip[data-variant="sector"].is-active {
+  background: var(--purple-soft);
+  border-color: var(--purple);
+  box-shadow: 0 0 0 1px var(--purple), 0 0 14px -4px var(--purple);
 }
 
 /* ================================================================== */

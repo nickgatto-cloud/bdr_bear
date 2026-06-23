@@ -10,6 +10,7 @@ export type ChipCategory =
   | "tech"
   | "security"
   | "trade"
+  | "sector"
   | "role";
 
 export interface Chip {
@@ -90,6 +91,9 @@ export const CHIPS: Chip[] = [
   { id: "electrical", label: "Electrical", category: "trade" },
   { id: "gc", label: "General Contractor", category: "trade" },
   { id: "painting", label: "Painting/Wallpaper", category: "trade" },
+
+  { id: "residential", label: "Residential", category: "sector" },
+  { id: "commercial", label: "Commercial", category: "sector" },
 
   { id: "owner", label: "Owner role", category: "role" },
   { id: "estimator", label: "Estimator role", category: "role" },
@@ -561,6 +565,34 @@ export const COACHING: Record<string, CoachingCard> = {
     fant: ["F", "N"],
     vestt: ["S", "T1"],
     keywords: ["painting", "paint", "wallpaper", "coatings", "wall covering"],
+  },
+
+  /* ---- Sector ---- */
+  residential: {
+    id: "residential",
+    tag: "Sector",
+    category: "sector",
+    heading: "Residential",
+    signal: "Repetitive units and floor plans — the same layouts repeat across the job.",
+    talkTrack:
+      "Residential is where repetition eats the day. Togal's pattern search and repeating groups let you take off one unit and apply it across every identical one, so you're not re-tracing the same plan twenty times. Show a multi-unit plan auto-detected once, then replicated across the set.",
+    tip: "Demo repeating groups / pattern search on a multi-unit plan.",
+    fant: ["F", "N"],
+    vestt: ["S", "T1"],
+    keywords: ["residential", "resi", "homes", "housing", "multifamily", "multi-family", "apartments", "condos", "single family", "townhomes"],
+  },
+  commercial: {
+    id: "commercial",
+    tag: "Sector",
+    category: "sector",
+    heading: "Commercial",
+    signal: "Large, complex plan sets across many trades, with frequent revisions.",
+    talkTrack:
+      "Commercial means big plan sets and constant addenda. Togal auto-detects scope across a large set in minutes and compares revisions side-by-side, so nothing slips between drawing issues. The bigger and busier the set, the more time it gives back.",
+    tip: "Lead with speed on large sets plus revision comparison.",
+    fant: ["F", "N"],
+    vestt: ["S", "T1"],
+    keywords: ["commercial", "office", "retail", "hospitality", "hotel", "mixed-use", "mixed use", "institutional", "industrial", "high-rise", "highrise"],
   },
 
   /* ---- Roles ---- */

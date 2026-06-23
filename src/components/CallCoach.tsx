@@ -75,17 +75,19 @@ function buildNotesFields(
   const isGC = trades.some((c) => c.id === "gc");
   const tradeNames = trades.filter((c) => c.id !== "gc").map(heading);
   const software = inCat("competitor").map(heading);
+  const sectors = inCat("sector").map((c) => c.label); // Residential / Commercial
+
+  const baseType = isGC
+    ? "General Contractor"
+    : trades.length
+    ? "Specialty / Subcontractor"
+    : "";
+  const companyType =
+    [baseType, sectors.join(" / ")].filter(Boolean).join(" · ") || DASH;
 
   return [
     { label: "Contact's Role", value: roles.length ? roles.join(", ") : DASH },
-    {
-      label: "Company Type",
-      value: isGC
-        ? "General Contractor"
-        : trades.length
-        ? "Specialty / Subcontractor"
-        : DASH,
-    },
+    { label: "Company Type", value: companyType },
     {
       label: "Company Trade(s)",
       value: tradeNames.length
@@ -130,6 +132,7 @@ const ACCENT_BY_CATEGORY: Record<string, GuidanceEntry["accent"]> = {
   role: "denim",
   tech: "denim",
   security: "denim",
+  sector: "purple",
   objection: "neutral",
 };
 

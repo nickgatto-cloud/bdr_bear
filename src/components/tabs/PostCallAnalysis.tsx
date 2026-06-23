@@ -13,6 +13,7 @@ const ACCENT_BY_CATEGORY: Record<string, string> = {
   role: "var(--denim)",
   tech: "var(--purple)",
   security: "var(--denim)",
+  sector: "var(--purple)",
   objection: "var(--border-strong)",
 };
 
