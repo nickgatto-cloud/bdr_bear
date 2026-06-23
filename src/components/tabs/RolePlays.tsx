@@ -6,9 +6,9 @@ import PracticeScenario from "@/components/tabs/PracticeScenario";
 type SubTab = "angles" | "post-call" | "scenario";
 
 const SUBTABS: { id: SubTab; label: string; icon: ReactNode }[] = [
+  { id: "scenario", label: "Practice scenario", icon: <RepeatIcon /> },
   { id: "angles", label: "Role angles", icon: <UsersIcon /> },
   { id: "post-call", label: "Post-call analysis", icon: <TargetIcon /> },
-  { id: "scenario", label: "Practice scenario", icon: <RepeatIcon /> },
 ];
 
 export default function RolePlays({
@@ -16,7 +16,7 @@ export default function RolePlays({
 }: {
   liveTranscript?: string;
 }) {
-  const [sub, setSub] = useState<SubTab>("angles");
+  const [sub, setSub] = useState<SubTab>("scenario");
 
   return (
     <div className="px-7 py-6">
