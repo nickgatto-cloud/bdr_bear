@@ -1,5 +1,7 @@
-// Lists the most recent Aircall calls. Auth (api_id:api_token) is server-side only.
+// Lists the most recent Aircall calls, each enriched with its HubSpot contact.
+// All auth (Aircall Basic + HubSpot token) is server-side only.
 import { AIRCALL_BASE, aircallAuth } from "@/lib/aircall";
+import { hubspotContactByPhone } from "@/lib/hubspot";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -53,7 +55,19 @@ export async function GET() {
       status: c.status ?? null,
       missed: !!c.missed_call_reason,
       hasRecording: !!c.recording,
+      hubspot: null as Awaited<ReturnType<typeof hubspotContactByPhone>>,
     }));
+
+    // enrich each call with its HubSpot contact (dedup numbers, best-effort)
+    const numbers = [...new Set(calls.map((c) => c.number).filter(Boolean))] as string[];
+    const lookups = await Promise.all(
+      numbers.map(async (n) => [n, await hubspotContactByPhone(n)] as const)
+    );
+    const byNumber = new Map(lookups);
+    for (const c of calls) {
+      if (c.number && byNumber.get(c.number)) c.hubspot = byNumber.get(c.number)!;
+    }
+
     return Response.json({ calls });
   } catch {
     return Response.json({ error: "Couldn't reach Aircall." }, { status: 502 });

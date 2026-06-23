@@ -2,6 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+interface HubContact {
+  name: string | null;
+  company: string | null;
+  jobTitle: string | null;
+}
 interface AircallCall {
   id: number;
   direction: string | null;
@@ -12,6 +17,7 @@ interface AircallCall {
   status: string | null;
   missed: boolean;
   hasRecording: boolean;
+  hubspot: HubContact | null;
 }
 
 function fmtTime(ts: string | null): string {
@@ -73,8 +79,9 @@ export default function RecentCalls({
   const select = async (c: AircallCall) => {
     setSelectedId(c.id);
     setBusyId(c.id);
-    const who = c.contactName || c.number || "Unknown";
-    const header = `Aircall — ${c.direction ?? "call"} · ${who}${
+    const who = c.hubspot?.name || c.contactName || c.number || "Unknown";
+    const companyBit = c.hubspot?.company ? ` (${c.hubspot.company})` : "";
+    const header = `Aircall — ${c.direction ?? "call"} · ${who}${companyBit}${
       c.startedAt ? ` · ${fmtTime(c.startedAt)}` : ""
     }${c.durationSec ? ` · ${fmtDur(c.durationSec)}` : ""}`;
     try {
@@ -128,13 +135,23 @@ export default function RecentCalls({
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="font-medium text-[14px] text-[var(--fg)] truncate">
-                  {c.contactName || c.number || "Unknown number"}
+                  {c.hubspot?.name || c.contactName || c.number || "Unknown number"}
+                  {c.hubspot && (
+                    <span
+                      className="ml-2 text-[9px] font-semibold tracking-[0.08em] uppercase px-1.5 py-0.5 rounded-full align-middle"
+                      style={{ color: "var(--orange)", background: "rgba(250,144,22,0.14)" }}
+                    >
+                      HubSpot
+                    </span>
+                  )}
                 </span>
                 <span className="text-[12px] text-[var(--fg-dim)] flex-none">
                   {fmtTime(c.startedAt)}
                 </span>
               </div>
               <div className="text-[12px] text-[var(--fg-muted)] flex flex-wrap gap-x-2 mt-0.5">
+                {c.hubspot?.company && <span>{c.hubspot.company}</span>}
+                {c.hubspot?.company && <span>·</span>}
                 {c.direction && <span>{c.direction}</span>}
                 {c.durationSec ? <span>· {fmtDur(c.durationSec)}</span> : null}
                 {c.missed && <span>· missed</span>}
