@@ -23,8 +23,7 @@ import {
   type GuidanceBlock,
 } from "@/lib/coaching";
 import BookDemo from "@/components/tabs/BookDemo";
-import FantQualify from "@/components/tabs/FantQualify";
-import CallScript from "@/components/tabs/CallScript";
+import BdrBlueprint from "@/components/tabs/BdrBlueprint";
 import RolePlays from "@/components/tabs/RolePlays";
 import DangerousSoftware from "@/components/tabs/DangerousSoftware";
 import { CALL_STATE_KEY, clearPersistedCall } from "@/lib/storage";
@@ -32,14 +31,13 @@ import {
   SectionLabel,
   HeadsetIcon,
   CalendarIcon,
-  TargetIcon,
   ScriptIcon,
   ChatIcon,
   AlertIcon,
   ResetIcon,
 } from "@/components/ui";
 
-type TabId = "live" | "book-demo" | "fant" | "script" | "roleplay" | "danger";
+type TabId = "live" | "book-demo" | "blueprint" | "roleplay" | "danger";
 
 const NAV: {
   id: TabId;
@@ -50,8 +48,7 @@ const NAV: {
 }[] = [
   { id: "live", label: "The Bear's Den", desc: "Real-time objection handling and coaching", icon: <HeadsetIcon /> },
   { id: "book-demo", label: "Book Demo", desc: "Route the prospect to the right BDR", icon: <CalendarIcon /> },
-  { id: "fant", label: "FANT Qualify", desc: "Fit · Authority · Need · Timing scorecard", icon: <TargetIcon /> },
-  { id: "script", label: "VESTT Framework", desc: "The VESTT motion, stage by stage", icon: <ScriptIcon /> },
+  { id: "blueprint", label: "BDR Blueprint", desc: "The VESTT call motion and the FANT scorecard", icon: <ScriptIcon /> },
   { id: "roleplay", label: "Role Plays", desc: "Drills, post-call analysis, and live practice", icon: <ChatIcon /> },
   { id: "danger", label: "Dangerous Software", desc: "Competitor watch list by trade", icon: <AlertIcon />, danger: true },
 ];
@@ -220,7 +217,11 @@ export default function CallCoach() {
         if (typeof s.estimators === "string") setEstimators(s.estimators);
         if (typeof s.seconds === "number") setSeconds(s.seconds);
         if (typeof s.running === "boolean") setRunning(s.running);
-        if (typeof s.tab === "string") setTab(s.tab);
+        if (typeof s.tab === "string") {
+          // old standalone tabs now live under BDR Blueprint
+          const t = s.tab === "fant" || s.tab === "script" ? "blueprint" : s.tab;
+          setTab(t as TabId);
+        }
       }
     } catch {
       /* ignore malformed storage */
@@ -589,11 +590,14 @@ export default function CallCoach() {
           ) : (
             <div className="cc-scroll h-full overflow-y-auto cc-enter">
               {tab === "book-demo" && <BookDemo />}
-              {tab === "fant" && (
-                <FantQualify key={resetNonce} fant={fant} setFantValue={setFantValue} />
-              )}
-              {tab === "script" && (
-                <CallScript vestt={vestt} setVesttValue={setVesttValue} />
+              {tab === "blueprint" && (
+                <BdrBlueprint
+                  fant={fant}
+                  setFantValue={setFantValue}
+                  vestt={vestt}
+                  setVesttValue={setVesttValue}
+                  resetNonce={resetNonce}
+                />
               )}
               {tab === "roleplay" && (
                 <RolePlays key={resetNonce} liveTranscript={liveTranscriptText} />
