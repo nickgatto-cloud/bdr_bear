@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-  OPENER,
   VESTT,
   VESTT_SCRIPT,
   VESTT_INTRO,
@@ -27,19 +26,12 @@ export default function CallScript({
       else next.add(id);
       return next;
     });
-  const allIds = ["open", ...VESTT.map((s) => s.key)];
+  const allIds = VESTT.map((s) => s.key);
   const allOpen = open.size === allIds.length;
 
   return (
     <div className="px-7 py-6">
-      <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-        <div>
-          <h2 className="text-xl font-semibold">Guided call script</h2>
-          <p className="text-[var(--fg-muted)] text-[15px] mt-1">
-            Open, then work the VESTT motion. Expand any stage; mark it done as you
-            go — it syncs with the live tracker.
-          </p>
-        </div>
+      <div className="flex items-center justify-end mb-4 flex-wrap gap-3">
         <div className="flex items-center gap-4">
           <button
             className="cc-btn"
@@ -71,17 +63,6 @@ export default function CallScript({
       </div>
 
       <div className="cc-scroll max-h-[520px] overflow-y-auto pr-2 space-y-3">
-        {/* opener — unchanged content, now collapsible */}
-        <ScriptCard
-          badge="0"
-          accent="var(--green)"
-          title={OPENER.title}
-          goal={OPENER.goal}
-          lines={OPENER.lines}
-          isOpen={open.has("open")}
-          onExpand={() => toggleOpen("open")}
-        />
-
         {/* VESTT stages */}
         {VESTT.map((stage, idx) => {
           const script = VESTT_SCRIPT[stage.key];
