@@ -6,6 +6,7 @@ import {
   VESTT,
   type TranscriptAnalysis,
 } from "@/lib/coaching";
+import RecentCalls from "@/components/tabs/RecentCalls";
 
 const ACCENT_BY_CATEGORY: Record<string, string> = {
   competitor: "var(--orange)",
@@ -81,6 +82,9 @@ export default function PostCallAnalysis({
           </span>
         </div>
       </div>
+
+      {/* pull a recent call's transcript straight from Aircall */}
+      <RecentCalls onLoad={setText} />
 
       <div className="cc-label flex items-center gap-2">
         <ClipboardIcon size={13} /> PASTE CALL TRANSCRIPT
