@@ -51,7 +51,7 @@ const NAV: {
   { id: "live", label: "The Bear's Den", desc: "Real-time objection handling and coaching", icon: <HeadsetIcon /> },
   { id: "book-demo", label: "Book Demo", desc: "Route the prospect to the right BDR", icon: <CalendarIcon /> },
   { id: "fant", label: "FANT Qualify", desc: "Fit · Authority · Need · Timing scorecard", icon: <TargetIcon /> },
-  { id: "script", label: "Call Script", desc: "The VESTT motion, stage by stage", icon: <ScriptIcon /> },
+  { id: "script", label: "VESTT Framework", desc: "The VESTT motion, stage by stage", icon: <ScriptIcon /> },
   { id: "roleplay", label: "Role Plays", desc: "Drills, post-call analysis, and live practice", icon: <ChatIcon /> },
   { id: "danger", label: "Dangerous Software", desc: "Competitor watch list by trade", icon: <AlertIcon />, danger: true },
 ];
