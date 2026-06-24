@@ -20,6 +20,14 @@ export default function PostCallAnalysis({
   // seed from the live call (re-seeds each time this view is opened)
   const [text, setText] = useState(liveTranscript);
   const [analysis, setAnalysis] = useState<TranscriptAnalysis | null>(null);
+  // recording link for the loaded HubSpot call (opens in HubSpot, new tab)
+  const [recordingUrl, setRecordingUrl] = useState<string | null>(null);
+
+  // load a transcript from a non-HubSpot source → clear any recording link
+  const loadText = (t: string) => {
+    setText(t);
+    setRecordingUrl(null);
+  };
 
   const analyze = () => {
     if (!text.trim()) return;
@@ -28,6 +36,7 @@ export default function PostCallAnalysis({
   const reset = () => {
     setText("");
     setAnalysis(null);
+    setRecordingUrl(null);
   };
 
   const exportReport = async () => {
@@ -84,7 +93,24 @@ export default function PostCallAnalysis({
       </div>
 
       {/* recent calls from HubSpot → transcript pulled from Quo / Aircall */}
-      <HubSpotCalls onLoad={setText} />
+      <HubSpotCalls
+        onLoad={(t, url) => {
+          setText(t);
+          setRecordingUrl(url ?? null);
+        }}
+      />
+
+      {recordingUrl && (
+        <a
+          href={recordingUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 mb-3 text-[14px] font-medium text-[var(--denim)] hover:underline"
+          title="Open this call's recording in HubSpot (new tab)"
+        >
+          <LinkIcon /> Open recording in HubSpot ↗
+        </a>
+      )}
 
       <div className="cc-label flex items-center gap-2">
         <ClipboardIcon size={13} /> PASTE CALL TRANSCRIPT
@@ -105,13 +131,13 @@ export default function PostCallAnalysis({
         {liveTranscript && (
           <button
             className="cc-btn"
-            onClick={() => setText(liveTranscript)}
+            onClick={() => loadText(liveTranscript)}
             title="Pull the transcript captured during the live call"
           >
             Pull from live call
           </button>
         )}
-        <button className="cc-btn" onClick={() => setText(SAMPLE_TRANSCRIPT)}>
+        <button className="cc-btn" onClick={() => loadText(SAMPLE_TRANSCRIPT)}>
           Load sample
         </button>
         <button

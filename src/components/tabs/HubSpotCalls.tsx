@@ -49,7 +49,7 @@ function fmtDur(ms: number | null): string {
 export default function HubSpotCalls({
   onLoad,
 }: {
-  onLoad: (text: string) => void;
+  onLoad: (text: string, recordingUrl?: string | null) => void;
 }) {
   const [calls, setCalls] = useState<HubSpotCall[]>([]);
   const [loading, setLoading] = useState(false);
@@ -88,19 +88,21 @@ export default function HubSpotCalls({
       [c.direction, fmtWhen(c.timestamp), fmtDur(c.durationMs)]
         .filter(Boolean)
         .join(" · ") || null,
-      c.recordingUrl ? `Recording: ${c.recordingUrl}` : null,
     ].filter(Boolean);
     const header = headerLines.join("\n");
     const notes = c.body ? `\n\nNotes from HubSpot:\n${c.body}` : "";
+    // the recording rides alongside via onLoad's 2nd arg so the transcript box
+    // stays clean and the link stays clickable (opens in HubSpot in a new tab)
+    const emit = (text: string) => onLoad(text, c.recordingUrl);
 
     // no number to bridge on — just load whatever HubSpot has
     if (!c.externalNumber) {
-      onLoad(`${header}${notes || "\n\n(No transcript or notes for this call.)"}`);
+      emit(`${header}${notes || "\n\n(No transcript or notes for this call.)"}`);
       return;
     }
 
     setBusyId(c.id);
-    onLoad(`${header}\n\nPulling transcript from Quo / Aircall…`);
+    emit(`${header}\n\nPulling transcript from Quo / Aircall…`);
     try {
       const q = new URLSearchParams({ number: c.externalNumber });
       if (c.internalNumber) q.set("internal", c.internalNumber);
@@ -108,14 +110,14 @@ export default function HubSpotCalls({
       const data = await res.json();
       if (data?.transcript) {
         const label = data.source === "quo" ? "Quo" : data.source === "aircall" ? "Aircall" : "transcript";
-        onLoad(`${header}\n\n--- Transcript (${label}) ---\n${data.transcript}`);
+        emit(`${header}\n\n--- Transcript (${label}) ---\n${data.transcript}`);
       } else {
-        onLoad(
+        emit(
           `${header}\n\n(No transcript found in Quo or Aircall for this number.)${notes}`
         );
       }
     } catch {
-      onLoad(`${header}\n\n(Couldn't reach the provider.)${notes}`);
+      emit(`${header}\n\n(Couldn't reach the provider.)${notes}`);
     } finally {
       setBusyId(null);
     }
