@@ -950,8 +950,10 @@ function LiveCoach({
         </div>
         <p className="mt-2 text-[12px] text-[var(--fg-dim)]">
           Tags the matching chip for objections, and answers any question from
-          Togal&apos;s playbook, studies, and case studies. Heard lines also log
-          to the transcript under Role Plays → Post-call analysis.
+          Togal&apos;s playbook, studies, and case studies — or pulls customer
+          companies by state and trade from HubSpot (e.g. “flooring companies in
+          Florida”). Heard lines also log to the transcript under Role Plays →
+          Post-call analysis.
         </p>
       </section>
     </div>
