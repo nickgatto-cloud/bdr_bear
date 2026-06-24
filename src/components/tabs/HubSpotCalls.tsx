@@ -19,6 +19,7 @@ interface HubSpotCall {
   externalNumber: string | null;
   internalNumber: string | null;
   recordingUrl: string | null;
+  hubspotUrl: string | null;
   body: string;
   hubspot: HubContact | null;
 }
@@ -127,9 +128,10 @@ export default function HubSpotCalls({
     ].filter(Boolean);
     const header = headerLines.join("\n");
     const notes = c.body ? `\n\nNotes from HubSpot:\n${c.body}` : "";
-    // the recording rides alongside via onLoad's 2nd arg so the transcript box
-    // stays clean and the link stays clickable (opens in HubSpot in a new tab)
-    const emit = (text: string) => onLoad(text, c.recordingUrl);
+    // the link rides alongside via onLoad's 2nd arg so the transcript box stays
+    // clean — prefer the HubSpot record page (opens the call in HubSpot), falling
+    // back to the raw recording URL if we couldn't build the record link
+    const emit = (text: string) => onLoad(text, c.hubspotUrl ?? c.recordingUrl);
 
     // no number to bridge on — just load whatever HubSpot has
     if (!c.externalNumber) {

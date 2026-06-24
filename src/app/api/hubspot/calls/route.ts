@@ -102,6 +102,12 @@ export async function GET(request: Request) {
     }
 
     const data = (await res.json()) as { results?: RawCall[] };
+    // the portal id (for building HubSpot record-page links) lives in the
+    // HubSpot-hosted recording URLs (…/portal/{id}/engagement/…); Quo URLs lack it
+    const portalId =
+      (data.results ?? [])
+        .map((r) => /portal\/(\d+)/.exec(r.properties?.hs_call_recording_url ?? "")?.[1])
+        .find(Boolean) ?? null;
     const calls = (data.results ?? []).map((r) => {
       const p = r.properties ?? {};
       const direction = p.hs_call_direction ?? null;
@@ -125,6 +131,11 @@ export async function GET(request: Request) {
         externalNumber,
         internalNumber,
         recordingUrl: p.hs_call_recording_url ?? null,
+        // link to the call's record page in the HubSpot UI (opens the recording +
+        // transcript in context), not the raw audio URL
+        hubspotUrl: portalId
+          ? `https://app.hubspot.com/contacts/${portalId}/record/0-48/${r.id}`
+          : null,
         body: p.hs_call_body ? stripHtml(p.hs_call_body) : "",
         hubspot: null as HubContact | null,
       };
