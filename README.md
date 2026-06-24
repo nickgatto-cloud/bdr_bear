@@ -43,21 +43,33 @@ npm run dev      # http://localhost:3000
 npm run build && npm start   # production
 ```
 
-### Live AI role-play (Practice scenario)
+### Environment / integrations
 
-The **Role plays → Practice scenario** tab can run a live back-and-forth where
-Claude plays the prospect. This requires an Anthropic API key, read server-side
-only (never exposed to the browser):
+Every API key is read **server-side only** (never exposed to the browser). Set
+them in `togal-call-coach/.env.local` for local dev, and in the **Railway service
+→ Variables** tab for production — see `.env.example` for the full list.
 
-- **Local:** create `togal-call-coach/.env.local` with:
-  ```
-  ANTHROPIC_API_KEY=sk-ant-...
-  ```
-- **Railway (production):** add `ANTHROPIC_API_KEY` to the service's Variables.
+| Variable | Powers | Without it |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | Claude (`claude-opus-4-8`) — Analyze-bar Q&A + live Practice-scenario role-play | Practice scenario / Ask show a "set ANTHROPIC_API_KEY" message |
+| `HUBSPOT_ACCESS_TOKEN` | HubSpot CRM private-app token — Recent-calls feed, contact match, company intel | Recent-calls feed is empty |
+| `QUO_API_KEY` | Quo (OpenPhone) — call transcripts for Quo-placed calls | Quo transcripts don't pull |
+| `AIRCALL_API_ID` + `AIRCALL_API_KEY` | Aircall — call transcripts for Aircall-placed calls | Aircall transcripts don't pull |
 
-Without the key, the rest of the app works fully; the Practice scenario shows a
-clear "set ANTHROPIC_API_KEY" message instead of live replies. The role-play
-uses `claude-opus-4-8` via the official `@anthropic-ai/sdk`.
+HubSpot scopes required: `crm.objects.contacts.read`, `crm.objects.calls.read`,
+`crm.objects.companies.read`.
+
+```bash
+# local
+cp .env.example .env.local   # then fill in the values
+```
+
+**Railway (production):** add each variable above under the service's **Variables**
+tab, then redeploy. A missing key degrades only its own feature (the route returns
+a clear "isn't connected: set X" message) — the rest of the app keeps working.
+**Transcripts not loading in production but working locally almost always means
+`QUO_API_KEY` / `AIRCALL_API_ID` / `AIRCALL_API_KEY` aren't set in Railway**, since
+`.env.local` is gitignored and never deployed. Never commit real values.
 
 ## Structure
 
