@@ -20,6 +20,7 @@ interface HubSpotCall {
   internalNumber: string | null;
   recordingUrl: string | null;
   body: string;
+  summary: string;
   hubspot: HubContact | null;
 }
 
@@ -126,14 +127,20 @@ export default function HubSpotCalls({
         .join(" · ") || null,
     ].filter(Boolean);
     const header = headerLines.join("\n");
-    const notes = c.body ? `\n\nNotes from HubSpot:\n${c.body}` : "";
+    // when there's no full provider transcript, fall back to HubSpot's own AI
+    // call summary, then the call notes
+    const hubspotInfo = c.summary
+      ? `\n\n--- HubSpot call summary ---\n${c.summary}`
+      : c.body
+      ? `\n\nNotes from HubSpot:\n${c.body}`
+      : "";
     // the recording rides alongside via onLoad's 2nd arg so the transcript box
     // stays clean and the link stays clickable (opens in HubSpot in a new tab)
     const emit = (text: string) => onLoad(text, c.recordingUrl);
 
     // no number to bridge on — just load whatever HubSpot has
     if (!c.externalNumber) {
-      emit(`${header}${notes || "\n\n(No transcript or notes for this call.)"}`);
+      emit(`${header}${hubspotInfo || "\n\n(No transcript, summary, or notes for this call.)"}`);
       return;
     }
 
@@ -149,11 +156,11 @@ export default function HubSpotCalls({
         emit(`${header}\n\n--- Transcript (${label}) ---\n${data.transcript}`);
       } else {
         emit(
-          `${header}\n\n(No transcript found in Quo or Aircall for this number.)${notes}`
+          `${header}${hubspotInfo || "\n\n(No transcript in Quo/Aircall and no HubSpot summary for this call.)"}`
         );
       }
     } catch {
-      emit(`${header}\n\n(Couldn't reach the provider.)${notes}`);
+      emit(`${header}\n\n(Couldn't reach the provider.)${hubspotInfo}`);
     } finally {
       setBusyId(null);
     }
