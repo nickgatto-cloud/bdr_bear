@@ -1,12 +1,15 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   SCENARIO_PROSPECT_TYPES,
   SCENARIO_OBJECTIONS,
   buildScenario,
+  analyzeTranscript,
   type Difficulty,
   type Scenario,
   type ScenarioObjection,
+  type TranscriptAnalysis,
 } from "@/lib/coaching";
+import ReplaySummary from "@/components/tabs/ReplaySummary";
 
 /* ---- Web Speech API (browser speech-to-text) — minimal local types ---- */
 interface SpeechAlt {
@@ -246,6 +249,15 @@ export default function PracticeScenario() {
     }
   };
 
+  // score the live thread in the same "Replay summary" format as Post-call
+  const analysis = useMemo<TranscriptAnalysis | null>(() => {
+    if (!thread.some((t) => t.role === "rep")) return null;
+    const transcript = thread
+      .map((t) => `${t.role === "rep" ? "Rep" : "Prospect"}: ${t.text}`)
+      .join("\n");
+    return analyzeTranscript(transcript);
+  }, [thread]);
+
   return (
     <div>
       <div className="cc-label flex items-center gap-2">
@@ -324,7 +336,8 @@ export default function PracticeScenario() {
             </p>
           </div>
         ) : (
-          <div className="cc-enter grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-5">
+          <div className="cc-enter space-y-5">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-5">
             {/* chat */}
             <div className="cc-panel flex flex-col" style={{ height: 480 }}>
               <div className="px-5 py-3 border-b border-[var(--border)] flex items-center justify-between">
@@ -494,6 +507,14 @@ export default function PracticeScenario() {
                 </ul>
               </div>
             </div>
+            </div>
+
+            {analysis && (
+              <div>
+                <div className="cc-label">Your scorecard</div>
+                <ReplaySummary analysis={analysis} />
+              </div>
+            )}
           </div>
         )}
       </div>
