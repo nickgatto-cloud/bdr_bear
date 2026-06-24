@@ -9,6 +9,10 @@ export const dynamic = "force-dynamic";
 
 const HUBSPOT_SEARCH_URL = "https://api.hubapi.com/crm/v3/objects/calls/search";
 
+// Only surface real conversations — hide quick/no-answer calls under 1m30s.
+// hs_call_duration is in milliseconds.
+const MIN_CALL_DURATION_MS = 90 * 1000;
+
 interface RawCall {
   id: string;
   properties?: Record<string, string | null>;
@@ -52,6 +56,17 @@ export async function GET() {
       body: JSON.stringify({
         limit: 20,
         sorts: [{ propertyName: "hs_timestamp", direction: "DESCENDING" }],
+        filterGroups: [
+          {
+            filters: [
+              {
+                propertyName: "hs_call_duration",
+                operator: "GTE",
+                value: String(MIN_CALL_DURATION_MS),
+              },
+            ],
+          },
+        ],
         properties: [
           "hs_call_title",
           "hs_call_body",
