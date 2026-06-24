@@ -131,15 +131,51 @@ export async function GET(request: Request) {
         externalNumber,
         internalNumber,
         recordingUrl: p.hs_call_recording_url ?? null,
-        // link to the call's record page in the HubSpot UI (opens the recording +
-        // transcript in context), not the raw audio URL
-        hubspotUrl: portalId
-          ? `https://app.hubspot.com/contacts/${portalId}/record/0-48/${r.id}`
-          : null,
+        // set below to the associated contact's record page (calls have no
+        // standalone record page in HubSpot — they live on the contact timeline)
+        hubspotUrl: null as string | null,
         body: p.hs_call_body ? stripHtml(p.hs_call_body) : "",
         hubspot: null as HubContact | null,
       };
     });
+
+    // link each call to its associated contact's HubSpot record page (one batch
+    // call). The call's recording + transcript are on that contact's timeline.
+    if (portalId && calls.length) {
+      try {
+        const assocRes = await fetch(
+          "https://api.hubapi.com/crm/v4/associations/calls/contacts/batch/read",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            cache: "no-store",
+            body: JSON.stringify({ inputs: calls.map((c) => ({ id: c.id })) }),
+          }
+        );
+        if (assocRes.ok) {
+          const aj = (await assocRes.json()) as {
+            results?: {
+              from?: { id?: string };
+              to?: { toObjectId?: string | number }[];
+            }[];
+          };
+          for (const row of aj.results ?? []) {
+            const callId = row.from?.id;
+            const contactId = row.to?.[0]?.toObjectId;
+            if (!callId || contactId == null) continue;
+            const call = calls.find((c) => c.id === callId);
+            if (call) {
+              call.hubspotUrl = `https://app.hubspot.com/contacts/${portalId}/record/0-1/${contactId}`;
+            }
+          }
+        }
+      } catch {
+        /* leave hubspotUrl null → the UI falls back to the raw recording URL */
+      }
+    }
 
     // enrich each call with its HubSpot contact (dedup numbers). Sequential, NOT
     // Promise.all — a burst of search calls trips HubSpot's rate limit and the
