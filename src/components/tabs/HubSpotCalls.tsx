@@ -181,7 +181,7 @@ export default function HubSpotCalls({
             if (e.key === "Enter") runSearch();
           }}
           placeholder="Search a phone number…"
-          className="cc-field flex-1"
+          className="cc-field cc-field--accent flex-1"
         />
         <button
           className="cc-btn"

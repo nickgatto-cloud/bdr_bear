@@ -584,6 +584,11 @@ body {
   border-color: var(--green);
   box-shadow: 0 0 0 3px var(--green-soft);
 }
+/* always-green field — makes a field stand out (e.g. the phone search bar) */
+.cc-field--accent {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px var(--green-soft);
+}
 select.cc-field {
   appearance: none;
   cursor: pointer;
