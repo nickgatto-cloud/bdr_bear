@@ -85,7 +85,6 @@ export async function GET(request: Request) {
           "hs_call_from_number",
           "hs_call_to_number",
           "hs_call_recording_url",
-          "hs_call_summary",
         ],
       }),
     });
@@ -127,8 +126,6 @@ export async function GET(request: Request) {
         internalNumber,
         recordingUrl: p.hs_call_recording_url ?? null,
         body: p.hs_call_body ? stripHtml(p.hs_call_body) : "",
-        // HubSpot's AI call summary — the fallback when no Quo/Aircall transcript
-        summary: p.hs_call_summary?.trim() || "",
         hubspot: null as HubContact | null,
       };
     });
