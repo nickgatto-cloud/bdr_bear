@@ -5,17 +5,11 @@ import {
   type TranscriptAnalysis,
 } from "@/lib/coaching";
 import HubSpotCalls from "@/components/tabs/HubSpotCalls";
-import ReplaySummary, { overallColor } from "@/components/tabs/ReplaySummary";
-
-const ACCENT_BY_CATEGORY: Record<string, string> = {
-  competitor: "var(--orange)",
-  trade: "var(--green)",
-  role: "var(--denim)",
-  tech: "var(--purple)",
-  security: "var(--denim)",
-  sector: "var(--purple)",
-  objection: "var(--border-strong)",
-};
+import ReplaySummary, {
+  overallColor,
+  KeyMoments,
+  CoachGaps,
+} from "@/components/tabs/ReplaySummary";
 
 export default function PostCallAnalysis({
   liveTranscript = "",
@@ -128,79 +122,8 @@ export default function PostCallAnalysis({
           <div className="cc-enter space-y-5">
             {/* coverage summary */}
             <ReplaySummary analysis={analysis} />
-
-            {/* moments */}
-            {analysis.moments.length > 0 && (
-              <div>
-                <div className="cc-label">
-                  Key moments ({analysis.moments.length})
-                </div>
-                <div className="space-y-3">
-                  {analysis.moments.map((m) => (
-                    <div
-                      key={m.card.id}
-                      className="cc-panel p-4"
-                      style={{
-                        borderLeft: `3px solid ${
-                          ACCENT_BY_CATEGORY[m.card.category] ?? "var(--border-strong)"
-                        }`,
-                      }}
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <span
-                          className="text-[11px] font-semibold tracking-[0.08em] uppercase px-2 py-0.5 rounded-full"
-                          style={{
-                            color:
-                              ACCENT_BY_CATEGORY[m.card.category] ??
-                              "var(--fg-muted)",
-                            background: "rgba(255,255,255,0.04)",
-                          }}
-                        >
-                          {m.card.tag}
-                        </span>
-                        <span className="text-[var(--fg)] font-semibold text-[15px]">
-                          {m.card.heading}
-                        </span>
-                      </div>
-                      {m.line && (
-                        <p className="text-[var(--fg-dim)] text-[14px] italic mb-2">
-                          “{m.line}”
-                        </p>
-                      )}
-                      <p className="text-[var(--fg-muted)] text-[14px] leading-relaxed">
-                        <span className="text-[var(--fg)] font-medium">
-                          Ideal play:{" "}
-                        </span>
-                        {m.card.talkTrack}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* gaps */}
-            {analysis.gaps.length > 0 && (
-              <div>
-                <div className="cc-label" style={{ color: "var(--danger)" }}>
-                  Coach — work on this
-                </div>
-                <div className="cc-panel p-4 space-y-2">
-                  {analysis.gaps.map((g, i) => (
-                    <p
-                      key={i}
-                      className="text-[var(--fg-muted)] text-[14px] leading-relaxed pl-4 relative"
-                    >
-                      <span
-                        className="absolute left-0 top-2 w-1.5 h-1.5 rounded-full"
-                        style={{ background: "var(--danger)" }}
-                      />
-                      {g}
-                    </p>
-                  ))}
-                </div>
-              </div>
-            )}
+            <KeyMoments analysis={analysis} />
+            <CoachGaps analysis={analysis} />
           </div>
         )}
       </div>

@@ -9,7 +9,10 @@ import {
   type ScenarioObjection,
   type TranscriptAnalysis,
 } from "@/lib/coaching";
-import ReplaySummary from "@/components/tabs/ReplaySummary";
+import ReplaySummary, {
+  KeyMoments,
+  CoachGaps,
+} from "@/components/tabs/ReplaySummary";
 
 /* ---- Web Speech API (browser speech-to-text) — minimal local types ---- */
 interface SpeechAlt {
@@ -510,9 +513,13 @@ export default function PracticeScenario() {
             </div>
 
             {analysis && (
-              <div>
-                <div className="cc-label">Your scorecard</div>
-                <ReplaySummary analysis={analysis} />
+              <div className="space-y-5">
+                <div>
+                  <div className="cc-label">Your scorecard</div>
+                  <ReplaySummary analysis={analysis} />
+                </div>
+                <KeyMoments analysis={analysis} />
+                <CoachGaps analysis={analysis} />
               </div>
             )}
           </div>

@@ -1,5 +1,15 @@
 import { FANT, VESTT, type TranscriptAnalysis } from "@/lib/coaching";
 
+const ACCENT_BY_CATEGORY: Record<string, string> = {
+  competitor: "var(--orange)",
+  trade: "var(--green)",
+  role: "var(--denim)",
+  tech: "var(--purple)",
+  security: "var(--denim)",
+  sector: "var(--purple)",
+  objection: "var(--border-strong)",
+};
+
 export function overallColor(n: number): string {
   if (n >= 80) return "var(--green)";
   if (n >= 60) return "var(--orange)";
@@ -88,6 +98,75 @@ function Coverage({
           >
             {it.label}
           </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Matched battlecard moments from the transcript — shared by both views. */
+export function KeyMoments({ analysis }: { analysis: TranscriptAnalysis }) {
+  if (!analysis.moments.length) return null;
+  return (
+    <div>
+      <div className="cc-label">Key moments ({analysis.moments.length})</div>
+      <div className="space-y-3">
+        {analysis.moments.map((m) => {
+          const accent = ACCENT_BY_CATEGORY[m.card.category] ?? "var(--border-strong)";
+          return (
+            <div
+              key={m.card.id}
+              className="cc-panel p-4"
+              style={{ borderLeft: `3px solid ${accent}` }}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <span
+                  className="text-[11px] font-semibold tracking-[0.08em] uppercase px-2 py-0.5 rounded-full"
+                  style={{ color: accent, background: "rgba(255,255,255,0.04)" }}
+                >
+                  {m.card.tag}
+                </span>
+                <span className="text-[var(--fg)] font-semibold text-[15px]">
+                  {m.card.heading}
+                </span>
+              </div>
+              {m.line && (
+                <p className="text-[var(--fg-dim)] text-[14px] italic mb-2">
+                  “{m.line}”
+                </p>
+              )}
+              <p className="text-[var(--fg-muted)] text-[14px] leading-relaxed">
+                <span className="text-[var(--fg)] font-medium">Ideal play: </span>
+                {m.card.talkTrack}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/** Uncovered FANT/VESTT dimensions → what to work on. Shared by both views. */
+export function CoachGaps({ analysis }: { analysis: TranscriptAnalysis }) {
+  if (!analysis.gaps.length) return null;
+  return (
+    <div>
+      <div className="cc-label" style={{ color: "var(--danger)" }}>
+        Coach — work on this
+      </div>
+      <div className="cc-panel p-4 space-y-2">
+        {analysis.gaps.map((g, i) => (
+          <p
+            key={i}
+            className="text-[var(--fg-muted)] text-[14px] leading-relaxed pl-4 relative"
+          >
+            <span
+              className="absolute left-0 top-2 w-1.5 h-1.5 rounded-full"
+              style={{ background: "var(--danger)" }}
+            />
+            {g}
+          </p>
         ))}
       </div>
     </div>
