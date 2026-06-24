@@ -13,6 +13,7 @@ import ReplaySummary, {
   KeyMoments,
   CoachGaps,
 } from "@/components/tabs/ReplaySummary";
+import { buildReportDoc, downloadDocx, stamp } from "@/lib/exportReport";
 
 /* ---- Web Speech API (browser speech-to-text) — minimal local types ---- */
 interface SpeechAlt {
@@ -261,6 +262,28 @@ export default function PracticeScenario() {
     return analyzeTranscript(transcript);
   }, [thread]);
 
+  const exportReport = async () => {
+    if (!scenario || thread.length === 0) return;
+    const now = new Date();
+    const rolePlay = thread
+      .map((t) => `${t.role === "rep" ? "You" : "Prospect"}: ${t.text}`)
+      .join("\n");
+    const doc = buildReportDoc({
+      heading: "Togal Call Coach — Practice scenario",
+      meta: [
+        `Scenario: ${scenario.title}`,
+        `Prospect: ${prospectType} · Objection: ${
+          objection?.label ?? "—"
+        } · Difficulty: ${difficulty}`,
+      ],
+      analysis,
+      transcriptTitle: "Role-play transcript",
+      transcript: rolePlay,
+      exportedAt: now.toLocaleString(),
+    });
+    await downloadDocx(`togal-practice-${stamp(now)}.docx`, doc);
+  };
+
   return (
     <div>
       <div className="cc-label flex items-center gap-2">
@@ -322,9 +345,21 @@ export default function PracticeScenario() {
             ▷ Start practice scenario ↗
           </button>
         ) : (
-          <button className="cc-btn" onClick={reset}>
-            ↻ New scenario
-          </button>
+          <div className="flex gap-3 flex-wrap">
+            <button className="cc-btn" onClick={reset}>
+              ↻ New scenario
+            </button>
+            <button
+              className="cc-btn"
+              onClick={exportReport}
+              disabled={thread.length === 0}
+              title="Download the role-play + feedback as a text file"
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <DownloadIcon /> Export
+              </span>
+            </button>
+          </div>
         )}
       </div>
 
@@ -569,6 +604,26 @@ function MicIcon({ active }: { active?: boolean }) {
       <rect x="9" y="2" width="6" height="11" rx="3" />
       <path d="M5 10a7 7 0 0 0 14 0" fill="none" />
       <line x1="12" y1="19" x2="12" y2="22" />
+    </svg>
+  );
+}
+
+function DownloadIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <path d="M7 10l5 5 5-5" />
+      <path d="M12 15V3" />
     </svg>
   );
 }

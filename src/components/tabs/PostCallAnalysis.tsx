@@ -10,6 +10,7 @@ import ReplaySummary, {
   KeyMoments,
   CoachGaps,
 } from "@/components/tabs/ReplaySummary";
+import { buildReportDoc, downloadDocx, stamp } from "@/lib/exportReport";
 
 export default function PostCallAnalysis({
   liveTranscript = "",
@@ -27,6 +28,18 @@ export default function PostCallAnalysis({
   const reset = () => {
     setText("");
     setAnalysis(null);
+  };
+
+  const exportReport = async () => {
+    const now = new Date();
+    const doc = buildReportDoc({
+      heading: "Togal Call Coach — Post-call analysis",
+      analysis,
+      transcriptTitle: "Transcript",
+      transcript: text,
+      exportedAt: now.toLocaleString(),
+    });
+    await downloadDocx(`togal-postcall-${stamp(now)}.docx`, doc);
   };
 
   return (
@@ -100,6 +113,16 @@ export default function PostCallAnalysis({
         )}
         <button className="cc-btn" onClick={() => setText(SAMPLE_TRANSCRIPT)}>
           Load sample
+        </button>
+        <button
+          className="cc-btn"
+          onClick={exportReport}
+          disabled={!text.trim() && !analysis}
+          title="Download the feedback + transcript as a text file"
+        >
+          <span className="inline-flex items-center gap-1.5">
+            <DownloadIcon /> Export
+          </span>
         </button>
         <button className="cc-btn" onClick={reset} title="Clear" aria-label="Clear">
           <RefreshIcon />
@@ -202,6 +225,25 @@ function RefreshIcon() {
       <path d="M21 3v5h-5" />
       <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
       <path d="M3 21v-5h5" />
+    </svg>
+  );
+}
+function DownloadIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <path d="M7 10l5 5 5-5" />
+      <path d="M12 15V3" />
     </svg>
   );
 }
