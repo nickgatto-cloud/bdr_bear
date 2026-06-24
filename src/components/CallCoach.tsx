@@ -69,7 +69,7 @@ function buildNotesFields(
   const DASH = "—";
 
   const roles = inCat("role")
-    .filter((c) => c.id !== "bid-volume")
+    .filter((c) => c.id !== "bid-volume" && c.id !== "estimating-team")
     .map((c) => c.label.replace(/\s*role$/i, ""));
   const trades = inCat("trade");
   const isGC = trades.some((c) => c.id === "gc");
@@ -344,6 +344,8 @@ export default function CallCoach() {
         else next.add(chip.id);
         return next;
       });
+      // the Estimating Team chip drives the Estimating team note field
+      if (chip.id === "estimating-team") setEstimatingTeam(isActive ? "" : "Yes");
       if (isActive) {
         // deselect → drop the card and any transcript line this chip logged
         setGuidance((g) => g.filter((e) => e.sourceChipId !== chip.id));

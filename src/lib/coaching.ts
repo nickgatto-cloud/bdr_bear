@@ -98,6 +98,7 @@ export const CHIPS: Chip[] = [
   { id: "owner", label: "Owner role", category: "role" },
   { id: "estimator", label: "Estimator role", category: "role" },
   { id: "pm-precon", label: "PM/Precon role", category: "role" },
+  { id: "estimating-team", label: "Estimating Team", category: "role" },
   { id: "bid-volume", label: "Bid volume", category: "role" },
 ];
 
@@ -647,6 +648,28 @@ export const COACHING: Record<string, CoachingCard> = {
     fant: ["N", "A"],
     vestt: ["V"],
     keywords: ["bid volume", "how many bids", "bids a month", "win rate", "volume"],
+  },
+  "estimating-team": {
+    id: "estimating-team",
+    tag: "Team",
+    category: "role",
+    heading: "Estimating team",
+    signal: "More than one estimator — collaboration turns a big plan set into parallel work.",
+    talkTrack:
+      "With a team, Togal's collaboration is the unlock: hit Collaborate to invite the whole estimating team onto the same live takeoff, so two or three estimators split one plan set and work it at the same time — no emailing files around or fighting over versions. It's cloud-based with permission levels, and you can loop in outside parties too. Proof: Consigli (80–100 estimators) left On-Screen Takeoff after 25 years specifically for cloud-based real-time collaboration, and Illusions Painting runs takeoffs with the whole team on the same file at once.",
+    tip: "Pitch parallel takeoffs — divide one plan set across the team. Ask how they hand work off today.",
+    fant: ["F", "N"],
+    vestt: ["V", "E"],
+    keywords: [
+      "estimating team",
+      "team of estimators",
+      "multiple estimators",
+      "few estimators",
+      "estimating department",
+      "our estimators",
+      "collaborate",
+      "collaboration",
+    ],
   },
 };
 
