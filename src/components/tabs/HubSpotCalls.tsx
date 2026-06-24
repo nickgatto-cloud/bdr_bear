@@ -56,6 +56,11 @@ export default function HubSpotCalls({
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // phone-number search → finds calls beyond the recent 20
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<HubSpotCall[] | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [searchedFor, setSearchedFor] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -75,6 +80,37 @@ export default function HubSpotCalls({
   useEffect(() => {
     load();
   }, [load]);
+
+  const runSearch = async () => {
+    const q = query.trim();
+    if (!q || searching) return;
+    setSearching(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/hubspot/calls?number=${encodeURIComponent(q)}`, {
+        cache: "no-store",
+      });
+      const data = await res.json();
+      if (!res.ok) setError(data?.error || `Search failed (${res.status}).`);
+      else {
+        setResults(Array.isArray(data.calls) ? data.calls : []);
+        setSearchedFor(q);
+      }
+    } catch {
+      setError("Couldn't reach the server.");
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const clearSearch = () => {
+    setResults(null);
+    setQuery("");
+    setSearchedFor("");
+  };
+
+  // show search results when a search is active, otherwise the recent feed
+  const shown = results ?? calls;
 
   const open = async (c: HubSpotCall) => {
     if (busyId) return;
@@ -134,15 +170,52 @@ export default function HubSpotCalls({
         </button>
       </div>
 
+      {/* search any phone number — reaches calls beyond the recent list */}
+      <div className="flex gap-2 mb-3">
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") runSearch();
+          }}
+          placeholder="Search a phone number…"
+          className="cc-field flex-1"
+        />
+        <button
+          className="cc-btn"
+          onClick={runSearch}
+          disabled={searching || !query.trim()}
+        >
+          {searching ? "Searching…" : "Search"}
+        </button>
+        {results !== null && (
+          <button className="cc-btn" onClick={clearSearch} title="Back to recent calls">
+            Clear
+          </button>
+        )}
+      </div>
+
+      {results !== null && !error && (
+        <div className="text-[12px] text-[var(--fg-dim)] mb-2">
+          {results.length === 0
+            ? `No calls found for “${searchedFor}”.`
+            : `${results.length} ${results.length === 1 ? "match" : "matches"} for “${searchedFor}”`}
+        </div>
+      )}
+
       {error ? (
         <p className="text-[14px] text-[var(--danger)] leading-relaxed">{error}</p>
-      ) : loading && calls.length === 0 ? (
-        <p className="text-[14px] text-[var(--fg-dim)]">Loading recent calls…</p>
-      ) : calls.length === 0 ? (
-        <p className="text-[14px] text-[var(--fg-dim)]">No recent calls found.</p>
+      ) : (loading || searching) && shown.length === 0 ? (
+        <p className="text-[14px] text-[var(--fg-dim)]">
+          {searching ? "Searching…" : "Loading recent calls…"}
+        </p>
+      ) : shown.length === 0 ? (
+        results !== null ? null : (
+          <p className="text-[14px] text-[var(--fg-dim)]">No recent calls found.</p>
+        )
       ) : (
         <div className="cc-scroll max-h-[260px] overflow-y-auto space-y-2 pr-1">
-          {calls.map((c) => (
+          {shown.map((c) => (
             <button
               key={c.id}
               onClick={() => open(c)}

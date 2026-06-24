@@ -33,7 +33,7 @@ function stripHtml(html: string): string {
     .trim();
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const token = process.env.HUBSPOT_ACCESS_TOKEN;
   if (!token) {
     return Response.json(
@@ -44,6 +44,24 @@ export async function GET() {
       { status: 503 }
     );
   }
+
+  // Default: the recent calls feed (≥ MIN_CALL_DURATION_MS). With ?number=, search
+  // ALL calls for that phone number instead — to reach calls beyond the recent 20.
+  // Numbers are stored like "+15127592456", so match the last 10 digits with a
+  // CONTAINS_TOKEN wildcard (the bare token doesn't match the +1 prefix).
+  const last10 = (new URL(request.url).searchParams.get("number") ?? "")
+    .replace(/\D/g, "")
+    .slice(-10);
+  const searching = last10.length >= 3;
+
+  const filterGroups = searching
+    ? [
+        { filters: [{ propertyName: "hs_call_from_number", operator: "CONTAINS_TOKEN", value: `*${last10}*` }] },
+        { filters: [{ propertyName: "hs_call_to_number", operator: "CONTAINS_TOKEN", value: `*${last10}*` }] },
+      ]
+    : [
+        { filters: [{ propertyName: "hs_call_duration", operator: "GTE", value: String(MIN_CALL_DURATION_MS) }] },
+      ];
 
   try {
     const res = await fetch(HUBSPOT_SEARCH_URL, {
@@ -56,17 +74,7 @@ export async function GET() {
       body: JSON.stringify({
         limit: 20,
         sorts: [{ propertyName: "hs_timestamp", direction: "DESCENDING" }],
-        filterGroups: [
-          {
-            filters: [
-              {
-                propertyName: "hs_call_duration",
-                operator: "GTE",
-                value: String(MIN_CALL_DURATION_MS),
-              },
-            ],
-          },
-        ],
+        filterGroups,
         properties: [
           "hs_call_title",
           "hs_call_body",
