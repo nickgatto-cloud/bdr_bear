@@ -951,3 +951,15 @@ select.cc-field {
     padding-bottom: 12px;
   }
 }
+
+/* On short desktop/laptop screens the chip rail would crowd out the coaching
+   feed (it's flex-1). Shrink the chips + tighten the rail so the feed stays big. */
+@media (min-width: 768px) and (max-height: 900px) {
+  .chip {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+  .cc-chiprail {
+    row-gap: 8px;
+  }
+}
