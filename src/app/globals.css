@@ -393,6 +393,10 @@ body {
   border-color: rgba(106, 163, 255, 0.5);
   color: #a9c8ff;
 }
+.chip[data-variant="play"] {
+  border-color: rgba(58, 182, 90, 0.55);
+  color: #84d79b;
+}
 .chip.is-active {
   color: var(--fg);
 }
@@ -430,6 +434,11 @@ body {
   background: var(--purple-soft);
   border-color: var(--purple);
   box-shadow: 0 0 0 1px var(--purple), 0 0 14px -4px var(--purple);
+}
+.chip[data-variant="play"].is-active {
+  background: var(--green-soft);
+  border-color: var(--green);
+  box-shadow: 0 0 0 1px var(--green), 0 0 14px -4px var(--green);
 }
 
 /* ================================================================== */

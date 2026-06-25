@@ -304,6 +304,9 @@ export default function CallCoach() {
     [lastByCategory, fant, vestt]
   );
 
+  // the Follow-up sub-tab shows a live-composed follow-up from the call context
+  const followUp = useMemo(() => buildAction("follow-up", ctx), [ctx]);
+
   const applyCardToFrameworks = useCallback((card: CoachingCard) => {
     if (card.fant?.length) {
       setFant((prev) => {
@@ -602,6 +605,7 @@ export default function CallCoach() {
               setEstimators={setEstimators}
               guidance={guidance}
               guidanceRef={guidanceRef}
+              followUp={followUp}
             />
           ) : (
             <div className="cc-scroll h-full overflow-y-auto cc-enter">
@@ -646,6 +650,7 @@ function LiveCoach({
   setEstimators,
   guidance,
   guidanceRef,
+  followUp,
 }: {
   activeChips: Set<string>;
   onChip: (c: Chip) => void;
@@ -661,8 +666,9 @@ function LiveCoach({
   setEstimators: (v: string) => void;
   guidance: GuidanceEntry[];
   guidanceRef: React.RefObject<HTMLDivElement | null>;
+  followUp: GuidanceBlock;
 }) {
-  const [coachingTab, setCoachingTab] = useState<"guidance" | "notes">(
+  const [coachingTab, setCoachingTab] = useState<"guidance" | "notes" | "follow-up">(
     "guidance"
   );
   const [copied, setCopied] = useState(false);
@@ -751,6 +757,12 @@ function LiveCoach({
             >
               Notes
             </button>
+            <button
+              className={`subtab ${coachingTab === "follow-up" ? "is-active" : ""}`}
+              onClick={() => setCoachingTab("follow-up")}
+            >
+              Follow-up
+            </button>
           </div>
           {coachingTab === "guidance" && (
             <span className="text-[12px] text-[var(--fg-dim)]">
@@ -761,18 +773,6 @@ function LiveCoach({
 
         {coachingTab === "guidance" ? (
           <>
-            <div className="flex gap-2 overflow-x-auto cc-scroll pb-2 mb-3 flex-none">
-              {ACTIONS.map((a) => (
-                <button
-                  key={a.id}
-                  className={`action-btn ${activeActions.has(a.id) ? "is-active" : ""}`}
-                  onClick={() => onAction(a.id)}
-                >
-                  {a.label} <span className="opacity-50">↗</span>
-                </button>
-              ))}
-            </div>
-
             <div
               className={`relative ${feedH === null ? "flex-1 min-h-0" : ""}`}
               style={feedH !== null ? { height: feedH } : undefined}
@@ -784,9 +784,9 @@ function LiveCoach({
               {guidance.length === 0 ? (
                 <div className="h-full flex items-center justify-center text-center px-8">
                   <p className="text-[var(--fg-dim)] text-[15px] max-w-md leading-relaxed">
-                    Tap a chip below or fire a quick action above. Competitor
-                    comparisons land on the left; objections, trades, and roles
-                    on the right — newest first.
+                    Tap a chip below to pull coaching. Competitor comparisons land
+                    on the left; objections, trades, and roles on the right —
+                    newest first.
                   </p>
                 </div>
               ) : (
@@ -834,6 +834,38 @@ function LiveCoach({
               </div>
             </div>
           </>
+        ) : coachingTab === "follow-up" ? (
+          <div className="cc-panel cc-scroll flex-1 min-h-0 overflow-y-auto p-5">
+            <div
+              className="text-[11px] font-semibold tracking-[0.11em] uppercase mb-1"
+              style={{ color: "var(--denim)" }}
+            >
+              {followUp.tag}
+            </div>
+            <h4 className="text-[var(--fg)] font-semibold text-[16px] mb-4">
+              {followUp.heading}
+            </h4>
+            {/* render as an email draft: subject line, then body paragraphs */}
+            <div className="max-w-2xl space-y-3">
+              {followUp.body.map((line, i) =>
+                i === 0 ? (
+                  <p
+                    key={i}
+                    className="text-[var(--fg)] text-[14px] font-medium pb-3 border-b border-[var(--border)]"
+                  >
+                    {line}
+                  </p>
+                ) : (
+                  <p
+                    key={i}
+                    className="text-[var(--fg-muted)] text-[14px] leading-relaxed"
+                  >
+                    {line}
+                  </p>
+                )
+              )}
+            </div>
+          </div>
         ) : (
           <div
             className="cc-panel cc-scroll flex-1 min-h-0 overflow-y-auto p-5"
@@ -956,6 +988,28 @@ function LiveCoach({
               </div>
             );
           })}
+
+          {/* plays — composed actions, tagged like chips */}
+          <div>
+            <div
+              className="text-[10px] font-semibold uppercase tracking-[0.09em] mb-1.5"
+              style={{ color: "var(--green)" }}
+            >
+              Plays
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {ACTIONS.filter((a) => a.id !== "follow-up").map((a) => (
+                <button
+                  key={a.id}
+                  className={`chip ${activeActions.has(a.id) ? "is-active" : ""}`}
+                  data-variant="play"
+                  onClick={() => onAction(a.id)}
+                >
+                  {a.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         <div className="mt-3 flex gap-3">
