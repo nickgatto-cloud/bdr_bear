@@ -297,6 +297,10 @@ body {
   .cc-sidebar.is-open {
     transform: translateX(0);
   }
+  /* let the main content scroll vertically instead of being clipped */
+  .cc-content {
+    overflow-y: auto;
+  }
 }
 @media (min-width: 1024px) {
   /* never show the drawer scrim on desktop */
@@ -927,3 +931,23 @@ select.cc-field {
 .cc-stagger > *:nth-child(4) { animation-delay: 190ms; }
 .cc-stagger > *:nth-child(5) { animation-delay: 240ms; }
 .cc-stagger > *:nth-child(6) { animation-delay: 290ms; }
+
+/* ================================================================== */
+/*  Responsive — touch targets (placed last so they win the cascade)   */
+/* ================================================================== */
+@media (max-width: 1023px) {
+  .chip {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+  .cc-btn {
+    padding: 10px 16px;
+  }
+  .cc-field {
+    padding: 12px 14px;
+    font-size: 16px; /* ≥16px avoids iOS zoom-on-focus */
+  }
+  .subtab {
+    padding-bottom: 12px;
+  }
+}

@@ -11,7 +11,7 @@ const SEGMENTS: { key: Segment; label: string; accent: Accent; icon: ReactNode }
 
 export default function BookDemo() {
   return (
-    <div className="px-7 py-6 space-y-7">
+    <div className="px-4 py-5 lg:px-7 lg:py-6 space-y-6 lg:space-y-7">
       {SEGMENTS.map((seg) => {
         const reps = BDRS.filter((b) => b.segment === seg.key);
         if (!reps.length) return null;
