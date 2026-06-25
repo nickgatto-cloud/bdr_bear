@@ -30,7 +30,7 @@ export default function BdrBlueprint({
   return (
     <div>
       {/* sub-tab nav (VESTT / FANT) */}
-      <div className="px-4 pt-5 lg:px-7 lg:pt-6">
+      <div className="px-4 pt-5 md:px-7 md:pt-6">
         <div className="flex justify-around items-center border-b border-[var(--border)]">
           {SUBTABS.map((t) => (
             <button

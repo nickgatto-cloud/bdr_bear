@@ -19,7 +19,7 @@ export default function RolePlays({
   const [sub, setSub] = useState<SubTab>("post-call");
 
   return (
-    <div className="px-4 py-5 lg:px-7 lg:py-6">
+    <div className="px-4 py-5 md:px-7 md:py-6">
       {/* secondary sub-tab nav */}
       <div className="flex justify-around items-center border-b border-[var(--border)] mb-6">
         {SUBTABS.map((t) => (
@@ -126,7 +126,7 @@ function RoleAngles() {
         </div>
 
         {/* drill card */}
-        <div className="cc-panel p-5 lg:p-7 flex flex-col">
+        <div className="cc-panel p-5 md:p-7 flex flex-col">
           <div className="cc-label" style={{ color: "var(--denim)" }}>
             Prospect says
           </div>

@@ -596,7 +596,7 @@ export default function CallCoach() {
               </svg>
             </button>
             <div className="min-w-0">
-              <h1 className="text-base lg:text-xl font-semibold leading-tight truncate">
+              <h1 className="text-base md:text-xl font-semibold leading-tight truncate">
                 {active.label}
               </h1>
               <p className="hidden sm:block text-[13px] text-[var(--fg-muted)] truncate">
@@ -764,11 +764,11 @@ function LiveCoach({
   const sectionFill = coachingTab === "notes" || feedH === null;
 
   return (
-    <div className="min-h-full lg:h-full lg:min-h-0 px-4 py-4 lg:px-7 lg:py-6 flex flex-col gap-4 lg:gap-5">
+    <div className="min-h-full md:h-full md:min-h-0 px-4 py-4 md:px-7 md:py-6 flex flex-col gap-4 md:gap-5">
       {/* ---- top: coaching + notes (full width) ---- */}
       <section
-        className={`flex flex-col min-h-[48vh] lg:min-h-0 ${
-          sectionFill ? "lg:flex-1" : ""
+        className={`flex flex-col min-h-[48vh] md:min-h-0 ${
+          sectionFill ? "md:flex-1" : ""
         }`}
       >
         <div className="flex items-center justify-between border-b border-[var(--border)] mb-3">

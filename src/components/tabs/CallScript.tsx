@@ -30,7 +30,7 @@ export default function CallScript({
   const allOpen = open.size === allIds.length;
 
   return (
-    <div className="px-4 py-5 lg:px-7 lg:py-6">
+    <div className="px-4 py-5 md:px-7 md:py-6">
       <div className="flex items-center justify-end mb-4 flex-wrap gap-3">
         <div className="flex items-center gap-4">
           <button

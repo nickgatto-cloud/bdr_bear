@@ -47,7 +47,7 @@ export default function FantQualify({
       : "Early — keep asking questions before you push for a demo.";
 
   return (
-    <div className="px-4 py-5 lg:px-7 lg:py-6">
+    <div className="px-4 py-5 md:px-7 md:py-6">
       {/* score header */}
       <div className="cc-panel p-6 mb-6">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-3">

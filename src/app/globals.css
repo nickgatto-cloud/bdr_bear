@@ -274,7 +274,7 @@ body {
 /* ================================================================== */
 /*  Responsive — below desktop the sidebar becomes a drawer            */
 /* ================================================================== */
-@media (max-width: 1023px) {
+@media (max-width: 767px) {
   .cc-hamburger {
     display: inline-flex;
   }
@@ -302,7 +302,7 @@ body {
     overflow-y: auto;
   }
 }
-@media (min-width: 1024px) {
+@media (min-width: 768px) {
   /* never show the drawer scrim on desktop */
   .cc-scrim {
     display: none;
@@ -935,7 +935,7 @@ select.cc-field {
 /* ================================================================== */
 /*  Responsive — touch targets (placed last so they win the cascade)   */
 /* ================================================================== */
-@media (max-width: 1023px) {
+@media (max-width: 767px) {
   .chip {
     padding: 8px 14px;
     font-size: 13px;

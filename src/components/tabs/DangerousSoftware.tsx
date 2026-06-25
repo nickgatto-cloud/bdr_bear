@@ -10,7 +10,7 @@ export default function DangerousSoftware() {
   const notes = sw.notes && sw.notes.length ? sw.notes : null;
 
   return (
-    <div className="px-4 py-5 lg:px-7 lg:py-6">
+    <div className="px-4 py-5 md:px-7 md:py-6">
       {/* warning banner */}
       <div
         className="rounded-lg p-4 mb-6 flex items-start gap-3"

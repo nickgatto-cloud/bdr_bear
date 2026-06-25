@@ -377,7 +377,7 @@ export default function PracticeScenario() {
           <div className="cc-enter space-y-5">
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-5">
             {/* chat */}
-            <div className="cc-panel flex flex-col h-[68vh] lg:h-[480px]">
+            <div className="cc-panel flex flex-col h-[68vh] md:h-[480px]">
               <div className="px-5 py-3 border-b border-[var(--border)] flex items-center justify-between">
                 <span className="text-[var(--fg)] font-semibold text-[15px]">
                   Live role-play
