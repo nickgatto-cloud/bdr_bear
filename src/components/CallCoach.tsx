@@ -989,7 +989,7 @@ function LiveCoach({
       {/* ---- bottom: tag what you hear (full width) ---- */}
       <section ref={chipsRef} className="flex-none">
         <SectionLabel>Tag what you hear</SectionLabel>
-        <div className="cc-chiprail flex flex-wrap gap-x-6 gap-y-3">
+        <div className="cc-chiprail cc-scroll flex flex-wrap gap-x-6 gap-y-3 pr-1">
           {CHIP_GROUPS.map((g) => {
             const groupChips = CHIPS.filter((c) => c.category === g.cat);
             if (!groupChips.length) return null;

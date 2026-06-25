@@ -962,5 +962,11 @@ select.cc-field {
   }
   .cc-chiprail {
     row-gap: clamp(6px, 1vh, 12px);
+    /* chips shrink first (above); once they hit their floor and the rail would
+       still crowd the feed, the rail scrolls so the feed keeps a big fixed share.
+       calc leaves room for the feed: large cap on tall screens (no scroll),
+       tight on short ones (scroll). max() stops chips vanishing on tiny screens. */
+    max-height: max(110px, calc(100vh - 620px));
+    overflow-y: auto;
   }
 }
