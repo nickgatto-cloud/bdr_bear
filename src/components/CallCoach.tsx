@@ -59,6 +59,17 @@ const ACTIONS: { id: string; label: string }[] = [
   { id: "follow-up", label: "Follow-up" },
 ];
 
+// the chip rail, grouped by category with its accent colour — so a rep scans
+// "Tag what you hear" by section instead of reading 28 look-alike chips
+const CHIP_GROUPS: { cat: string; label: string; color: string }[] = [
+  { cat: "competitor", label: "Competitors", color: "var(--orange)" },
+  { cat: "objection", label: "Objections", color: "var(--fg-muted)" },
+  { cat: "trade", label: "Trades", color: "var(--green)" },
+  { cat: "sector", label: "Sector", color: "var(--purple)" },
+  { cat: "role", label: "Roles", color: "var(--denim)" },
+  { cat: "security", label: "Security", color: "var(--denim)" },
+];
+
 /** Build the structured call-notes from the currently active chips (live). */
 function buildNotesFields(
   activeChips: Set<string>
@@ -918,17 +929,33 @@ function LiveCoach({
       {/* ---- bottom: tag what you hear (full width) ---- */}
       <section ref={chipsRef} className="flex-none">
         <SectionLabel>Tag what you hear</SectionLabel>
-        <div className="flex flex-wrap gap-2">
-          {CHIPS.map((chip) => (
-            <button
-              key={chip.id}
-              className={`chip ${activeChips.has(chip.id) ? "is-active" : ""}`}
-              data-variant={chip.category}
-              onClick={() => onChip(chip)}
-            >
-              {chip.label}
-            </button>
-          ))}
+        <div className="flex flex-wrap gap-x-6 gap-y-3">
+          {CHIP_GROUPS.map((g) => {
+            const groupChips = CHIPS.filter((c) => c.category === g.cat);
+            if (!groupChips.length) return null;
+            return (
+              <div key={g.cat}>
+                <div
+                  className="text-[10px] font-semibold uppercase tracking-[0.09em] mb-1.5"
+                  style={{ color: g.color }}
+                >
+                  {g.label}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {groupChips.map((chip) => (
+                    <button
+                      key={chip.id}
+                      className={`chip ${activeChips.has(chip.id) ? "is-active" : ""}`}
+                      data-variant={chip.category}
+                      onClick={() => onChip(chip)}
+                    >
+                      {chip.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         <div className="mt-3 flex gap-3">
@@ -951,11 +978,9 @@ function LiveCoach({
           </button>
         </div>
         <p className="mt-2 text-[12px] text-[var(--fg-dim)]">
-          Tags the matching chip for objections, and answers any question from
-          Togal&apos;s playbook, studies, and case studies — or pulls customer
-          companies by state and trade from HubSpot (e.g. “flooring companies in
-          Florida”). Heard lines also log to the transcript under Role Plays →
-          Post-call analysis.
+          Tap a chip, or type what you heard or a question — answers from
+          Togal&apos;s playbook &amp; case studies, or pull customers like “flooring
+          companies in Florida”.
         </p>
       </section>
     </div>
