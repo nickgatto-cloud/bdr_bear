@@ -158,6 +158,8 @@ function formatClock(totalSeconds: number): string {
 export default function CallCoach() {
   const [tab, setTab] = useState<TabId>("live");
   const [resetNonce, setResetNonce] = useState(0);
+  // mobile: the sidebar collapses into a hamburger-triggered drawer (<lg)
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [seconds, setSeconds] = useState(5 * 60 + 19);
   // the call clock only ticks while running; Reset pauses it at 0 until the
@@ -531,8 +533,12 @@ export default function CallCoach() {
 
   return (
     <div className="cc-app">
+      {/* mobile drawer backdrop */}
+      {sidebarOpen && (
+        <div className="cc-scrim" onClick={() => setSidebarOpen(false)} aria-hidden />
+      )}
       {/* ---------- sidebar ---------- */}
-      <aside className="cc-sidebar">
+      <aside className={`cc-sidebar ${sidebarOpen ? "is-open" : ""}`}>
         <div className="cc-brand">
           <span className="cc-brand-dot" aria-hidden />
           <div className="leading-tight">
@@ -552,7 +558,10 @@ export default function CallCoach() {
               className={`cc-nav ${n.danger ? "cc-nav--danger" : ""} ${
                 tab === n.id ? "is-active" : ""
               }`}
-              onClick={() => setTab(n.id)}
+              onClick={() => {
+                setTab(n.id);
+                setSidebarOpen(false);
+              }}
             >
               {n.icon}
               <span>{n.label}</span>
@@ -576,9 +585,20 @@ export default function CallCoach() {
       {/* ---------- main ---------- */}
       <main className="cc-main">
         <header className="cc-topbar">
-          <div>
-            <h1 className="text-xl font-semibold leading-tight">{active.label}</h1>
-            <p className="text-[13px] text-[var(--fg-muted)]">{active.desc}</p>
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              className="cc-hamburger"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Open menu"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+                <path d="M3 6h18M3 12h18M3 18h18" />
+              </svg>
+            </button>
+            <div className="min-w-0">
+              <h1 className="text-xl font-semibold leading-tight truncate">{active.label}</h1>
+              <p className="text-[13px] text-[var(--fg-muted)] truncate">{active.desc}</p>
+            </div>
           </div>
           <div className="flex items-center gap-4">
             <span className="cc-clock">{formatClock(seconds)}</span>
