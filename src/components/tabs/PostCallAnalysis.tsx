@@ -22,6 +22,8 @@ export default function PostCallAnalysis({
   const [analysis, setAnalysis] = useState<TranscriptAnalysis | null>(null);
   // recording link for the loaded HubSpot call (opens in HubSpot, new tab)
   const [recordingUrl, setRecordingUrl] = useState<string | null>(null);
+  const [pullingNotes, setPullingNotes] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   // load a transcript from a non-HubSpot source → clear any recording link
   const loadText = (t: string) => {
@@ -37,6 +39,53 @@ export default function PostCallAnalysis({
     setText("");
     setAnalysis(null);
     setRecordingUrl(null);
+  };
+
+  // pull the live call and summarize it into a HubSpot-ready notes breakdown
+  const pullLiveNotes = async () => {
+    if (!liveTranscript.trim() || pullingNotes) return;
+    setPullingNotes(true);
+    setRecordingUrl(null);
+    try {
+      const res = await fetch("/api/summarize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transcript: liveTranscript }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        setText(`(Couldn't pull live notes: ${data.error ?? res.status})`);
+      } else {
+        setText(`--- Live call notes ---\n${data.notes}`);
+      }
+    } catch {
+      setText("(Couldn't reach the server to pull live notes.)");
+    } finally {
+      setPullingNotes(false);
+    }
+  };
+
+  // copy the box (notes or transcript) as plain text for pasting into HubSpot
+  const copyForHubspot = async () => {
+    if (!text.trim()) return;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand("copy");
+      } catch {
+        /* nothing else we can do */
+      }
+      document.body.removeChild(ta);
+    }
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1600);
   };
 
   const exportReport = async () => {
@@ -131,12 +180,23 @@ export default function PostCallAnalysis({
         {liveTranscript && (
           <button
             className="cc-btn"
-            onClick={() => loadText(liveTranscript)}
-            title="Pull the transcript captured during the live call"
+            onClick={pullLiveNotes}
+            disabled={pullingNotes}
+            title="Summarize the live call into HubSpot-ready notes"
           >
-            Pull from live call
+            {pullingNotes ? "Pulling…" : "Pull live notes"}
           </button>
         )}
+        <button
+          className="cc-btn"
+          onClick={copyForHubspot}
+          disabled={!text.trim()}
+          title="Copy the notes/transcript as plain text for HubSpot"
+        >
+          <span className="inline-flex items-center gap-1.5">
+            <ClipboardIcon size={13} /> {copied ? "Copied ✓" : "Copy for HubSpot"}
+          </span>
+        </button>
         <button className="cc-btn" onClick={() => loadText(SAMPLE_TRANSCRIPT)}>
           Load sample
         </button>
