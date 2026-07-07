@@ -43,7 +43,14 @@ export default function PostCallAnalysis({
 
   // pull the live call and summarize it into a HubSpot-ready notes breakdown
   const pullLiveNotes = async () => {
-    if (!liveTranscript.trim() || pullingNotes) return;
+    if (pullingNotes) return;
+    if (!liveTranscript.trim()) {
+      setText(
+        "(No live call captured yet — tag what you hear in The Bear's Den during a call, then come back and Pull live notes.)"
+      );
+      setRecordingUrl(null);
+      return;
+    }
     setPullingNotes(true);
     setRecordingUrl(null);
     try {
@@ -177,16 +184,14 @@ export default function PostCallAnalysis({
         <button className="btn-primary" onClick={analyze} disabled={!text.trim()}>
           <LinkIcon /> Analyze call ↗
         </button>
-        {liveTranscript && (
-          <button
-            className="cc-btn"
-            onClick={pullLiveNotes}
-            disabled={pullingNotes}
-            title="Summarize the live call into HubSpot-ready notes"
-          >
-            {pullingNotes ? "Pulling…" : "Pull live notes"}
-          </button>
-        )}
+        <button
+          className="cc-btn"
+          onClick={pullLiveNotes}
+          disabled={pullingNotes}
+          title="Summarize the live call into HubSpot-ready notes"
+        >
+          {pullingNotes ? "Pulling…" : "Pull live notes"}
+        </button>
         <button
           className="cc-btn"
           onClick={copyForHubspot}
