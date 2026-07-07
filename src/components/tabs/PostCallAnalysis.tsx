@@ -41,32 +41,32 @@ export default function PostCallAnalysis({
     setRecordingUrl(null);
   };
 
-  // pull the live call and summarize it into a HubSpot-ready notes breakdown
-  const pullLiveNotes = async () => {
+  // summarize whatever transcript is in the box (HubSpot-loaded, pasted, or the
+  // live-tagged call) into a HubSpot-ready notes breakdown
+  const pullNotes = async () => {
     if (pullingNotes) return;
-    if (!liveTranscript.trim()) {
+    const source = text.trim();
+    if (!source) {
       setText(
-        "(No live call captured yet — tag what you hear in The Bear's Den during a call, then come back and Pull live notes.)"
+        "(No transcript to pull from yet — load a call from the list above, paste a transcript, or tag a live call in The Bear's Den, then Pull notes from transcripts.)"
       );
-      setRecordingUrl(null);
       return;
     }
     setPullingNotes(true);
-    setRecordingUrl(null);
     try {
       const res = await fetch("/api/summarize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transcript: liveTranscript }),
+        body: JSON.stringify({ transcript: source }),
       });
       const data = await res.json();
       if (!res.ok || data.error) {
-        setText(`(Couldn't pull live notes: ${data.error ?? res.status})`);
+        setText(`(Couldn't pull notes: ${data.error ?? res.status})`);
       } else {
-        setText(`--- Live call notes ---\n${data.notes}`);
+        setText(`--- Call notes ---\n${data.notes}`);
       }
     } catch {
-      setText("(Couldn't reach the server to pull live notes.)");
+      setText("(Couldn't reach the server to pull notes.)");
     } finally {
       setPullingNotes(false);
     }
@@ -186,11 +186,11 @@ export default function PostCallAnalysis({
         </button>
         <button
           className="cc-btn"
-          onClick={pullLiveNotes}
+          onClick={pullNotes}
           disabled={pullingNotes}
-          title="Summarize the live call into HubSpot-ready notes"
+          title="Summarize the loaded transcript into HubSpot-ready notes"
         >
-          {pullingNotes ? "Pulling…" : "Pull live notes"}
+          {pullingNotes ? "Pulling…" : "Pull notes from transcripts"}
         </button>
         <button
           className="cc-btn"
